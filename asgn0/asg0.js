@@ -24,10 +24,9 @@ function drawVector(v, color) {
   ctx.stroke();
 }
 
-var v1;
-var v2;
-
 function handleDrawEvent() {
+  clearCanvas();
+
   let v1X = document.getElementById('V1X').value;
   let v1Y = document.getElementById('V1Y').value;
   let v2X = document.getElementById('V2X').value;
@@ -38,10 +37,8 @@ function handleDrawEvent() {
   let v2ValX = parseFloat(v2X);
   let v2ValY = parseFloat(v2Y);
 
-  v1 = new Vector3([v1ValX, v1ValY, 0]);
-  v2 = new Vector3([v2ValX, v2ValY, 0]);
-
-  clearCanvas();
+  var v1 = new Vector3([v1ValX, v1ValY, 0]);
+  var v2 = new Vector3([v2ValX, v2ValY, 0]);
 
   drawVector(v1, "red");
   drawVector(v2, "blue");
@@ -60,8 +57,24 @@ function areaTriangle(v1, v2) {
   return cross.magnitude() / 2;
 }
 
-function handleOpEvent() {
-  handleDrawEvent();
+function handleDrawOperationEvent() {
+  clearCanvas();
+
+  let v1X = document.getElementById('V1X').value;
+  let v1Y = document.getElementById('V1Y').value;
+  let v2X = document.getElementById('V2X').value;
+  let v2Y = document.getElementById('V2Y').value;
+
+  let v1ValX = parseFloat(v1X);
+  let v1ValY = parseFloat(v1Y);
+  let v2ValX = parseFloat(v2X);
+  let v2ValY = parseFloat(v2Y);
+
+  var v1 = new Vector3([v1ValX, v1ValY, 0]);
+  var v2 = new Vector3([v2ValX, v2ValY, 0]);
+
+  drawVector(v1, "red");
+  drawVector(v2, "blue");
 
   let operation = document.getElementById('op').value;
   let scalar = document.getElementById('sc').value;
