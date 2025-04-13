@@ -80,6 +80,7 @@ function addActionsForHtmlUI() {
   document.getElementById('pointButton').onclick = function() { g_selectedType = POINT; };
   document.getElementById('triangleButton').onclick = function() { g_selectedType = TRIANGLE; };
   document.getElementById('circleButton').onclick = function() { g_selectedType = CIRCLE; };
+  document.getElementById('birdButton').onclick = function() { drawBird(); };
 
   document.getElementById('sizeSlider').addEventListener('mouseup', function() { g_selectedSize = this.value; });
 }
