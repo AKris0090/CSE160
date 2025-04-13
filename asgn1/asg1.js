@@ -103,6 +103,8 @@ function main() {
 
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT);
+
+  drawBird();
 }
 
 function click(ev) {
@@ -120,6 +122,12 @@ function click(ev) {
   g_points.push(shape);
 
   renderAllShapes();
+}
+
+function drawBird() {
+  let bird = new Bird();
+  g_points.push(bird);
+  bird.render();
 }
 
 function convertCoordinatesEventToGL(ev) {
