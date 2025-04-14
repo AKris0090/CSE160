@@ -112,6 +112,7 @@ function main() {
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   regularDrawing();
+  drawBird();
 }
 
 function regularDrawing() {
