@@ -97,7 +97,6 @@ function addActionsForHtmlUI() {
 
 function clearCanvas() {
   g_points = [];
-  playingGame = false;
   renderAllShapes();
 }
 
@@ -146,8 +145,7 @@ function click(ev) {
 
 function drawBird() {
   if(playingGame) {
-    clearCanvas();
-    playingGame = false;
+    regularDrawing();
   }
   let bird = new Bird();
   g_points.push(bird);
@@ -182,7 +180,6 @@ function checkAllTargets(xy) {
     count++;
     t1 = null;
     g_points[0] = null;
-    console.log("hit");
   }
   if(t2?.checkHit(xy)) {
     count++;
@@ -218,7 +215,9 @@ function startGunGame() {
 
 function gameLoop() {
   renderAllShapes();
-  requestAnimationFrame(gameLoop);
+  if(playingGame) {
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 function convertCoordinatesEventToGL(ev) {
