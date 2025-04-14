@@ -79,9 +79,9 @@ function connectVariablesToGLSL() {
 }
 
 function addActionsForHtmlUI() {
-  document.getElementById('redSlider').addEventListener('mouseup', function() { g_selectedColor[0] = this.value/100; });
-  document.getElementById('greenSlider').addEventListener('mouseup', function() { g_selectedColor[1] = this.value/100; });
-  document.getElementById('blueSlider').addEventListener('mouseup', function() { g_selectedColor[2] = this.value/100; });
+  document.getElementById('redSlider').addEventListener('mouseup', function() { g_selectedColor[0] = this.value; });
+  document.getElementById('greenSlider').addEventListener('mouseup', function() { g_selectedColor[1] = this.value; });
+  document.getElementById('blueSlider').addEventListener('mouseup', function() { g_selectedColor[2] = this.value; });
   document.getElementById('segmentSlider').addEventListener('mouseup', function() { g_selectedSegments = this.value; });
 
   document.getElementById('pointButton').onclick = function() { g_selectedType = POINT; };

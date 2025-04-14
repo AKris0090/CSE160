@@ -78,7 +78,7 @@ class Gun {
             const x = muzzleFlash.x;
             const y = muzzleFlash.y;
 
-            let scale = 3 * (muzzleFlash.timer / muzzleFlash.maxTimer);
+            let scale = 4 * (muzzleFlash.timer / muzzleFlash.maxTimer);
 
             if(muzzleFlash.timer < 3 && !muzzleFlash.one) {
                 muzzleFlash.one = true;
