@@ -27,10 +27,17 @@ let a_Position;
 let u_FragColor;
 let u_pointSize;
 
-let g_selectedColor = [0.0, 0.0, 0.0, 1.0];
-let g_selectedSize = 1;
+let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
+let g_selectedSize = 8;
 let g_selectedType = POINT;
-let g_selectedSegments = 3;
+let g_selectedSegments = 6;
+
+let playingGame = false;
+
+let gun;
+let t1;
+let t2;
+let t3;
 
 var g_points = [];
 
@@ -82,11 +89,15 @@ function addActionsForHtmlUI() {
   document.getElementById('circleButton').onclick = function() { g_selectedType = CIRCLE; };
   document.getElementById('birdButton').onclick = function() { drawBird(); };
 
+  document.getElementById('boringButton').onclick = function() { startGunGame(); };
+  document.getElementById('drawButton').onclick = function() { regularDrawing(); };
+
   document.getElementById('sizeSlider').addEventListener('mouseup', function() { g_selectedSize = this.value; });
 }
 
 function clearCanvas() {
   g_points = [];
+  playingGame = false;
   renderAllShapes();
 }
 
@@ -95,20 +106,28 @@ function main() {
   connectVariablesToGLSL();
   addActionsForHtmlUI();
 
-  // Register function (event handler) to be called on a mouse press
-  canvas.onmousedown = function(ev){ click(ev) };
-  canvas.onmousemove = function(ev) { if(ev.buttons ==1) click(ev) };
-
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  drawBird();
+  regularDrawing();
+}
+
+function regularDrawing() {
+  // Register function (event handler) to be called on a mouse press
+  canvas.onmousedown = function(ev){ click(ev) };
+  canvas.onmousemove = function(ev) { if(ev.buttons ==1) click(ev) };
+
+  playingGame = false;
+  clearCanvas();
 }
 
 function click(ev) {
+  if(playingGame) {
+    return;
+  }
   [x, y] = convertCoordinatesEventToGL(ev);
 
   let shape;
@@ -126,9 +145,80 @@ function click(ev) {
 }
 
 function drawBird() {
+  if(playingGame) {
+    clearCanvas();
+    playingGame = false;
+  }
   let bird = new Bird();
   g_points.push(bird);
   bird.render();
+}
+
+function getRandomPair() {
+  let x = Math.random() * 2 - 1;
+  let y = Math.random() * 2 - 1;
+  return [x, y];
+}
+
+function startRoundTargets() {
+  clearCanvas();
+
+  t1 = new Target(getRandomPair(), 8);
+  t2 = new Target(getRandomPair(), 8);
+  t3 = new Target(getRandomPair(), 8);
+
+  g_points.push(t1);
+  g_points.push(t2);
+  g_points.push(t3);
+
+  gun = new Gun();
+  g_points.push(gun);
+}
+
+let count = 0;
+
+function checkAllTargets(xy) {
+  if(t1?.checkHit(xy)) {
+    count++;
+    t1 = null;
+    g_points[0] = null;
+    console.log("hit");
+  }
+  if(t2?.checkHit(xy)) {
+    count++;
+    t2 = null;
+    g_points[1] = null;
+  }
+  if(t3?.checkHit(xy)) {
+    count++;
+    t3 = null;
+    g_points[2] = null;
+  }
+  if(count >= 3) {
+    count = 0;
+    startRoundTargets();
+  }
+}
+
+function startGunGame() {
+  playingGame = true;
+
+  startRoundTargets();
+  muzzleFlash.active = false;
+  muzzleFlash.timer = 0;
+  muzzleFlash.one = false;
+  muzzleFlash.two = false;
+  muzzleFlash.three = false;
+  canvas.onmousemove = function(ev) { gun.updateGunPos(convertCoordinatesEventToGL(ev)); }
+  canvas.onmousedown = function(ev) { if(muzzleFlash.active == false) { muzzleFlash.active = true;
+                                      muzzleFlash.timer = muzzleFlash.maxTimer;}
+                                      checkAllTargets(convertCoordinatesEventToGL(ev)); }; 
+  requestAnimationFrame(gameLoop);
+}
+
+function gameLoop() {
+  renderAllShapes();
+  requestAnimationFrame(gameLoop);
 }
 
 function convertCoordinatesEventToGL(ev) {
@@ -148,6 +238,9 @@ function renderAllShapes() {
   var len = g_points.length;
   for(var i = 0; i < len; i++) {
     var p = g_points[i];
+    if(p == null) {
+      continue;
+    }
     p.render();
   }
 }

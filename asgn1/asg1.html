@@ -6,10 +6,10 @@
   </head>
 
   <body onload="main()">
-    <canvas id="webgl" width="400" height="533">
+    <canvas id="webgl" width="500" height="500">
     Please use a browser that supports "canvas"
     </canvas>
-    <img src="bird.jpg" width="400">
+    <img src="bird.jpg" width="300">
 
     <p></p>
     <input type="button" value="Clear Canvas" id="clearButton" onclick="clearCanvas()">
@@ -22,18 +22,20 @@
     <input type="button" value="Circle" id="circleButton">
 
     <p></p>
-    Draw Image:
+    I want to:
     <p></p>
-    <input type="button" value="Bird" id="birdButton">
+    <input type="button" value="Draw some shapes" id="drawButton">
+    <input type="button" value="Draw a Bird" id="birdButton">
+    <input type="button" value="TRAIN MY AIM" id="boringButton">
 
     <p></p>
     Shape Color:
     <p></p>
-    Red: <input type="range" id="redSlider" name="red" min="0" max="100" step="0.01" value="0"/>
-    Green: <input type="range" id="greenSlider" name="green" min="0" max="100" step="0.01" value="0"/>
-    Blue: <input type="range" id="blueSlider" name="blue" min="0" max="100" step="0.01" value="0"/>
+    Red: <input type="range" id="redSlider" name="red" min="0" max="1" step="0.01" value="1"/>
+    Green: <input type="range" id="greenSlider" name="green" min="0" max="1" step="0.01" value="1"/>
+    Blue: <input type="range" id="blueSlider" name="blue" min="0" max="1" step="0.01" value="1"/>
     <p></p>
-    Shape Size: <input type="range" id="sizeSlider" name="size" min="5" max="40" step="1" value="1"/>
+    Shape Size: <input type="range" id="sizeSlider" name="size" min="5" max="40" step="1" value="8"/>
     (Circles) Segment Count: <input type="range" id="segmentSlider" name="segment" min="3" max="16" step="1" value="6"/>
 
     <script src="../lib/webgl-utils.js"></script>
@@ -44,5 +46,7 @@
     <script src="Triangle.js"></script>
     <script src="Circle.js"></script>
     <script src="Bird.js"></script>
+    <script src="Target.js"></script>
+    <script src="Gun.js"></script>
   </body>
 </html>

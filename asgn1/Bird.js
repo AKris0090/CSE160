@@ -13,8 +13,8 @@ function applyColor(rgba) {
     gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
-var scaleX = 6.8571;
-var scaleY = 9.1429;
+var scaleX;
+var scaleY;
 var posX = 6;
 var posY = 7;
 
@@ -37,6 +37,8 @@ function drawBirdTriangleFan(vertices) {
 
 class Bird {
     constructor() {
+        scaleX = 8.5;
+        scaleY = 8.5;
     }
   
     render() {
