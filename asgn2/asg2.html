@@ -1,0 +1,40 @@
+<!--
+Arjun Krishnan
+akrish29@ucsc.edu
+
+Notes to Grader:
+my submission's special features are notes in the <p> tags below the canvas. I hope you enjoy my project!
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Drawing Application</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="500" height="500">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+    <p id="output"></p>
+
+    <p></p>
+    Magenta Joint: <input type="range" id="yellowSlider" name="size" min="-45" max="45" step="0.1" value="-5"/>
+    Camera Angle: <input type="range" id="angleSlider" name="size" min="0" max="360" step="0.1" value="0"/>
+
+    <p></p>
+    Animation:
+    <input type="button" id="start" value="ON"/>
+    <input type="button" id="stop" value="OFF"/>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="BlockyAnimal.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Cube.js"></script>
+  </body>
+</html>
