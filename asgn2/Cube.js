@@ -1,16 +1,16 @@
 const cubeVertices = new Float32Array([
-    0,0,0, 1,1,0, 1,0,0,
-    0,0,0, 0,1,0, 1,1,0,
-    0,0,1, 1,0,1, 1,1,1,
-    0,0,1, 1,1,1, 0,1,1,
-    0,1,0, 0,1,1, 1,1,1,
-    0,1,0, 1,1,1, 1,1,0,
-    0,0,0, 1,0,1, 1,0,0,
-    0,0,0, 0,0,1, 1,0,1,
-    0,0,0, 0,1,0, 0,1,1,
-    0,0,0, 0,1,1, 0,0,1,
-    1,0,0, 1,1,0, 1,1,1,
-    1,0,0, 1,1,1, 1,0,1,
+    -1, -1,  1,   1,  1,  1,   1, -1,  1,
+    -1, -1,  1,  -1,  1,  1,   1,  1,  1,
+    -1, -1, -1,   1, -1, -1,   1,  1, -1,
+    -1, -1, -1,   1,  1, -1,  -1,  1, -1,
+    -1,  1, -1,   1,  1, -1,   1,  1,  1,
+    -1,  1, -1,   1,  1,  1,  -1,  1,  1,
+    -1, -1, -1,   1, -1,  1,   1, -1, -1,
+    -1, -1, -1,  -1, -1,  1,   1, -1,  1,
+     1, -1, -1,   1, -1,  1,   1,  1,  1,
+     1, -1, -1,   1,  1,  1,   1,  1, -1,
+    -1, -1, -1,  -1,  1,  1,  -1, -1,  1,
+    -1, -1, -1,  -1,  1, -1,  -1,  1,  1,
 ]);
 
 class Cube {
@@ -24,15 +24,7 @@ class Cube {
     }
 }
 
-function drawCube(m, rgba) {
+function drawCube(m) {
     gl.uniformMatrix4fv(u_ModelMatrix, false, m.elements);
-
-    gl.uniform4f(u_FragColor, rgba[0] * .6, rgba[1] * .6, rgba[2] * .6, rgba[3]);
-    drawTriangle3D(0);
-
-    gl.uniform4f(u_FragColor, rgba[0] * .9, rgba[1] * .9, rgba[2] * .9, rgba[3]);
-    drawTriangle3D(12);
-
-    gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
-    drawTriangle3D(24);
+    gl.drawArrays(gl.TRIANGLES, 0, 36);
 }
