@@ -105,6 +105,11 @@ function connectVariablesToGLSL() {
 
 function addActionsForHtmlUI() {
   document.getElementById('angleSlider').addEventListener('mousemove', function() { g_cameraAngle = this.value; renderAllShapes(); });
+  document.getElementById('topBeakSlider').addEventListener('mousemove', function() { g_topBeakAngle = this.value; renderAllShapes(); });
+  document.getElementById('bottomBeakSlider').addEventListener('mousemove', function() { g_bottomBeakAngle = this.value; renderAllShapes(); });
+  document.getElementById('wingSlider').addEventListener('mousemove', function() { g_leftWingAngle = this.value; renderAllShapes(); });
+
+  document.getElementById('headSlider').addEventListener('mousemove', function() { g_headAngle = this.value; renderAllShapes(); });
 
   document.getElementById('start').onclick = function() { g_animated = true; g_startTime = performance.now() / 1000.0; };
   document.getElementById('stop').onclick = function() { g_animated = false; };
