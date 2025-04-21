@@ -25,12 +25,17 @@ let g_wristAngle = 80;
 let bodyColor = [1, 0.85, 0.3, 1.0];
 let wingColor = [0, 0.5, 0.5, 1.0];
 let headColor = [0.98, 0.85, 0.85, 1.0];
-let beakColor = [0.25, 0.75, 0.75, 1.0]
-let featherColor = [1, 0.62, 0, 1.0]
-let secondaryFeatherColor = [1, 0.92, 0.15, 1.0]
+let beakColor = [0.25, 0.75, 0.75, 1.0];
+let bottomBeakColor = [0.75, 0.25, 0.25, 1.0]
+let featherColor = [0.7, 0.32, 1, 1.0]
+let secondaryFeatherColor = [1, 0.62, 0, 1.0]
 let primaryFeatherColor = [1, 0.45, 0.45, 1.0]
 
+let t = g_leftWingAngle / 80;
+
 function renderVulture() {
+    t = g_leftWingAngle / 80;
+
     var m = new Matrix4();
     drawBody(m);
 
@@ -52,7 +57,7 @@ function drawWing(root, mirror) {
         shoulder.scale(1, 1, -1); // reflect across Z
     }
 
-    shoulder.translate(-2.5, 1.15, 0.65).rotate(-40, 0, 0, 1).rotate(g_leftWingAngle, 0, 1, 0);
+    shoulder.translate(-2.5, 1.15, 0.65).rotate(-40, 0, 0, 1).rotate(g_leftWingAngle, 0, 1, 0).rotate(lerpVal(-5, 0, t), 1, 0, 0);
     
     drawTopWing(shoulder);
 
@@ -60,11 +65,11 @@ function drawWing(root, mirror) {
     drawCube(shoulder);
 }
 
-function drawFlightFeather(root, angle, angle2, length, width) {
+function drawFlightFeather(root, angle, angle2, length, width, angle3 = 0) {
     applyColor(featherColor);
     let feather = new Matrix4();
     feather.set(root);
-    feather.rotate(angle, 0, 1, 0).rotate(angle2, 0, 0, 1).scale(length * 6, 0.2, width);
+    feather.rotate(angle, 0, 1, 0).rotate(angle2, 0, 0, 1).rotate(angle3, 1, 0, 0).scale(length * 6, 0.2, width);
     drawAltCube(feather);
 }
 
@@ -76,16 +81,46 @@ function drawSecondaryFeather(root, angle, angle2, length, width) {
     drawAltCube(feather);
 }
 
-function drawPrimaryFeather(root, angle, angle2, length, width) {
+function drawPrimaryFeather(root, angle, angle2, angle3, length, width) {
     applyColor(primaryFeatherColor);
     let feather = new Matrix4();
     feather.set(root);
-    feather.rotate(angle, 0, 1, 0).rotate(angle2, 0, 0, 1).scale(length * 2, 0.75, width);
+    feather.rotate(angle3, 0, 0, 1).rotate(angle, 0, 1, 0).rotate(angle2, 1, 0, 0).scale(length * 2, 0.75, width);
     drawAltCube(feather);
 }
 
+// TODO: MAKE PRIMARY THICKER AND GO BOTH WAYS OF WING
+
+// TODO: LEGS
+
+// TODO: TAIL
+
+// TODO: FACE DECOR
+
+// TODO PERFORMANCE: INSTANTIATE ALL MATRICES AT TOP? to remove any need of new keyword
+
 function drawTopWing(root) {
-    let topWing = new Matrix4()
+    let topWing = new Matrix4();
+
+    // top primary feathers
+    topWing.set(root);
+    topWing.translate(0, 0.15, -0.2).scale(1, 0.25, 1);
+    drawPrimaryFeather(topWing, lerpVal(0, -60, t), lerpVal(-5, -50, t), 0, 1, 0.75);
+    topWing.translate(0, 0, .65);
+    drawPrimaryFeather(topWing, lerpVal(0, -60, t), lerpVal(-5, -10, t), 0, 1, 0.75);
+    topWing.translate(0, 0, .65);
+    drawPrimaryFeather(topWing, lerpVal(0, -60, t), lerpVal(-5, 0, t), 0, 1.1, 0.75);
+
+    // flight feathers
+    topWing.set(root);
+    topWing.translate(0, 0.15, -0.2).scale(1, 0.25, 1);
+    drawFlightFeather(topWing, lerpVal(0, -60, t), lerpVal(0, -50, t), .5, 0.5);
+    topWing.translate(0, 0, .65);
+    drawFlightFeather(topWing, lerpVal(0, -60, t), lerpVal(0, -50, t), .55, 0.5);
+    topWing.translate(0, 0, .65);
+    drawFlightFeather(topWing, lerpVal(0, -60, t), lerpVal(0, -50, t), .6, 0.5);
+
+    applyColor(wingColor);
     topWing.set(root);
     topWing.translate(0, 0, -1).scale(0.2, 0.2, 1).translate(0, 0, 1.25);
     drawCube(topWing);
@@ -95,7 +130,35 @@ function drawTopWing(root) {
 }
 
 function drawForeArm(root) {
-    let foreArm = new Matrix4()
+    let foreArm = new Matrix4();
+
+    // top primary feathers
+    foreArm.set(root);
+    foreArm.translate(-0.25, 1.05, 1);
+    drawPrimaryFeather(foreArm, lerpVal(0, 90, t), lerpVal(-5, -50, t), lerpVal(0, -50, t), 5.25, 2.5);
+    foreArm.translate(0, 0, 2.5);
+    drawPrimaryFeather(foreArm, lerpVal(0, 85, t), lerpVal(-5, -10, t), lerpVal(0, -20, t), 5.75, 2.5);
+    foreArm.translate(0, 0, 2.5);
+    drawPrimaryFeather(foreArm, lerpVal(0, 80, t), lerpVal(-5, 0, t), lerpVal(0, -10, t), 6, 2.5);
+    foreArm.translate(0, 0, 2.5);
+    drawPrimaryFeather(foreArm, lerpVal(0, 75, t), lerpVal(-5, 30, t), lerpVal(0, -30, t), 6.25, 2.5);
+    foreArm.translate(0, 0, 2.5);
+    drawPrimaryFeather(foreArm, lerpVal(0, 70, t), lerpVal(-5, 60, t), lerpVal(0, -45, t), 6, 2.5);
+
+    // flight feathers
+    foreArm.set(root);
+    foreArm.translate(-0.25, 1.05, 1);
+    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.5, 2.4, lerpVal(0, 90, t));
+    foreArm.translate(0, 0, 2.5);
+    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.6, 2.4, lerpVal(0, 90, t));
+    foreArm.translate(0, 0, 2.5);
+    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.8, 2.4, lerpVal(0, 90, t));
+    foreArm.translate(0, 0, 2.5);
+    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.85, 2.4, lerpVal(0, 90, t));
+    foreArm.translate(0, 0, 2.5);
+    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.9, 2.4, lerpVal(0, 90, t));
+
+    applyColor(wingColor);
     foreArm.set(root).translate(0, 0, -1.5).scale(1, 1, 7).translate(0, 0, 1);
     drawCube(foreArm);
 }
@@ -112,30 +175,29 @@ function drawElbow(root) {
 
 function drawHand(root) {
     let hand = new Matrix4();
-    hand.set(root)
+    hand.set(root);
 
-    let t = (g_leftWingAngle / 80);
-
-    // draw secondary flight feathers
+    // draw primary flight feathers
     hand.translate(0.1, 0.6, 0.1);
     drawFlightFeather(hand, lerpVal(-90, -90, t), 0, 4.5, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-80, -90, t), 0, 4.4, 2);
+    drawFlightFeather(hand, lerpVal(-80, -88, t), 0, 4.4, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-70, -90, t), 0, 4.3, 2);
+    drawFlightFeather(hand, lerpVal(-70, -86, t), 0, 4.3, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-60, -90, t), 0, 4.2, 2);
+    drawFlightFeather(hand, lerpVal(-60, -84, t), 0, 4.2, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-50, -90, t), 0, 4.15, 2);
+    drawFlightFeather(hand, lerpVal(-50, -82, t), 0, 4.15, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-40, -90, t), 0, 4.1, 2);
+    drawFlightFeather(hand, lerpVal(-40, -80, t), 0, 4.1, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-31, -90, t), 0, 3.95, 2);
+    drawFlightFeather(hand, lerpVal(-31, -78, t), 0, 3.95, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-23, -90, t), 0, 3.9, 2);
+    drawFlightFeather(hand, lerpVal(-23, -76, t), 0, 3.9, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-15, -90, t), 0, 3.85, 2);
+    drawFlightFeather(hand, lerpVal(-15, -74, t), 0, 3.85, 2);
 
+    // secondary flight feathers
     hand.set(root);
     hand.translate(0.1, 0, 0.1);
     drawSecondaryFeather(hand, lerpVal(-90, -90, t), 0, 4.5, 2);
@@ -144,39 +206,37 @@ function drawHand(root) {
     hand.translate(0, 0, 0.1);
     drawSecondaryFeather(hand, lerpVal(-70, -90, t), 0, 4.3, 2);
     hand.translate(0, 0, 0.1);
-    drawSecondaryFeather(hand, lerpVal(-60, -90, t), 0, 4.2, 2);
+    drawSecondaryFeather(hand, lerpVal(-56, -90, t), 0, 4.2, 2);
     hand.translate(0, 0, 0.1);
-    drawSecondaryFeather(hand, lerpVal(-50, -90, t), 0, 4.15, 2);
+    drawSecondaryFeather(hand, lerpVal(-43, -90, t), 0, 4.15, 2);
     hand.translate(0, 0, 0.1);
-    drawSecondaryFeather(hand, lerpVal(-40, -90, t), 0, 4.1, 2);
-    hand.translate(0, 0, 0.1);
-    drawSecondaryFeather(hand, lerpVal(-31, -90, t), 0, 3.95, 2);
-    hand.translate(0, 0, 0.1);
-    drawSecondaryFeather(hand, lerpVal(-23, -90, t), 0, 3.9, 2);
+    drawSecondaryFeather(hand, lerpVal(-30, -90, t), 0, 3.95, 2);
     hand.translate(0, 0, 0.1);
     drawSecondaryFeather(hand, lerpVal(-15, -90, t), 0, 3.85, 2);
 
+    // bottom primary feathers
     hand.set(root);
     hand.translate(-0.25, -1.05, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-90, -90, t), 0, 4.5, 2);
+    drawPrimaryFeather(hand, lerpVal(-90, -90, t), 0, 0, 4.5, 2);
     hand.translate(0, 0, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-70, -90, t), 0, 4.3, 2);
+    drawPrimaryFeather(hand, lerpVal(-70, -90, t), 0, 0, 4.3, 2);
     hand.translate(0, 0, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-50, -90, t), 0, 4.15, 2);
+    drawPrimaryFeather(hand, lerpVal(-43, -90, t), 0, 0, 4.15, 2);
     hand.translate(0, 0, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-25, -90, t), 0, 3.95, 2);
+    drawPrimaryFeather(hand, lerpVal(-20, -90, t), 0, 0, 3.95, 2);
 
+    // top primary feathers
     hand.set(root);
     hand.translate(-0.25, 1.05, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-90, -90, t), 0, 7, 2);
+    drawPrimaryFeather(hand, lerpVal(-90, -90, t), 0, 0, 7.5, 2);
     hand.translate(0, 0, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-70, -85, t), 0, 6.5, 2);
+    drawPrimaryFeather(hand, lerpVal(-70, -85, t), 0, 0, 7, 2);
     hand.translate(0, 0, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-50, -80, t), 0, 6, 2);
+    drawPrimaryFeather(hand, lerpVal(-50, -80, t), 0, 0, 6.5, 2);
     hand.translate(0, 0, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-31, -75, t), 0, 5.5, 2);
+    drawPrimaryFeather(hand, lerpVal(-31, -75, t), 0, 0, 6, 2);
     hand.translate(0, 0, 0.1);
-    drawPrimaryFeather(hand, lerpVal(-15, -70, t), 0, 5, 2);
+    drawPrimaryFeather(hand, lerpVal(-15, -70, t), 0, 0, 5.5, 2);
 
     hand.set(root).translate(-1, 0, 6.5);
     hand.scale(2, 2, 12)
@@ -275,7 +335,7 @@ function drawTopBeak(root) {
 }
 
 function drawBottomBeak(root) {
-    applyColor(beakColor);
+    applyColor(bottomBeakColor);
 
     let beak = new Matrix4();
 
