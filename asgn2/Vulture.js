@@ -19,6 +19,8 @@ let g_topBeakAngle = 14;
 let g_bottomBeakAngle = 10;
 let g_headAngle = 0;
 let g_leftWingAngle = 80;
+let g_elbowAngle = -165;
+let g_wristAngle = 80;
 
 let bodyColor = [1, 0.85, 0.3, 1.0];
 let wingColor = [0, 0.5, 0.5, 1.0];
@@ -60,13 +62,39 @@ function drawTopWing(root) {
     topWing.set(root);
     topWing.translate(0, 0, -1).scale(0.2, 0.2, 1).translate(0, 0, 1.5);
     drawCube(topWing);
+
+    topWing.scale(5, 5, 1);
+    drawElbow(root);
 }
 
 function drawForeArm(root) {
-    let topWing = new Matrix4()
-    topWing.set(root);
-    topWing.translate(0, 0, -1).scale(0.2, 0.2, 1).translate(0, 0, 1.5);
-    drawCube(topWing);
+    let foreArm = new Matrix4()
+    foreArm.set(root).translate(0, 0, -1.5).scale(1, 1, 5).translate(0, 0, 1.5);
+    drawCube(foreArm);
+}
+
+function drawElbow(root) {
+    let elbow = new Matrix4();
+    elbow.set(root).translate(0, 0, 1.25).rotate((-1.9167 * g_leftWingAngle -11.6667), 0, 1, 0).rotate((0.4167 * g_leftWingAngle - 3.333), 1, 0, 0).scale(0.185, 0.185, 0.26);
+
+    drawForeArm(elbow);
+    drawCube(elbow);
+    elbow.scale(5.4054, 5.4054, 3.846);
+    drawWrist(elbow);
+}
+
+function drawHand(root) {
+    let hand = new Matrix4()
+    hand.set(root).translate(0, 0, -1.5).scale(1, 1, 5).translate(0, 0, 1.5);
+    drawCube(hand);
+}
+
+function drawWrist(root) {
+    let wrist = new Matrix4();
+    wrist.set(root).translate(0, 0, 2.75).rotate((2 * g_leftWingAngle + 10), 0, 1, 0).rotate((0.4167 * g_leftWingAngle - 3.333), 1, 0, 0).scale(0.185, 0.185, 0.26);
+    
+    drawHand(wrist);
+    drawCube(wrist);
 }
 
 function drawBody(root) {

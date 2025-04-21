@@ -108,6 +108,8 @@ function addActionsForHtmlUI() {
   document.getElementById('topBeakSlider').addEventListener('mousemove', function() { g_topBeakAngle = this.value; renderAllShapes(); });
   document.getElementById('bottomBeakSlider').addEventListener('mousemove', function() { g_bottomBeakAngle = this.value; renderAllShapes(); });
   document.getElementById('wingSlider').addEventListener('mousemove', function() { g_leftWingAngle = this.value; renderAllShapes(); });
+  document.getElementById('elbowSlider').addEventListener('mousemove', function() { g_elbowAngle = this.value; renderAllShapes(); });
+  document.getElementById('handSlider').addEventListener('mousemove', function() { g_wristAngle = this.value; renderAllShapes(); });
 
   document.getElementById('headSlider').addEventListener('mousemove', function() { g_headAngle = this.value; renderAllShapes(); });
 
