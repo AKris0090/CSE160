@@ -34,8 +34,8 @@ let a_Normal;
 let u_FragColor;
 let u_ModelMatrix;
 let u_GlobalRotateMatrix;
-let angleX = 0;
-let angleY = 0;
+let angleX = -90;
+let angleY = 45;
 let g_lastX = 0;
 let g_lastY = 0;
 let g_Zoom = 10;
@@ -219,7 +219,6 @@ function renderAllShapes() {
   cameraMatrix.translate(0, 0, -g_Zoom);
   cameraMatrix.rotate(angleY, 1, 0, 0);
   cameraMatrix.rotate(angleX, 0, 1, 0);
-  cameraMatrix.translate(0, 0, 0);
 
   var finalMat = new Matrix4().set(g_ViewProjection);
   finalMat.multiply(cameraMatrix);
