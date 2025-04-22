@@ -116,9 +116,19 @@ function addActionsForHtmlUI() {
   document.getElementById('headSlider').addEventListener('mousemove', function() { g_headX = this.value; renderAllShapes(); });
   document.getElementById('headYSlider').addEventListener('mousemove', function() { g_headY = this.value; renderAllShapes(); });
 
-  document.getElementById('legSlider').addEventListener('mousemove', function() { g_legAngle = this.value; renderAllShapes(); });
-  document.getElementById('shinSlider').addEventListener('mousemove', function() { g_shinAngle = this.value; renderAllShapes(); });
-  document.getElementById('toeSlider').addEventListener('mousemove', function() { g_toeAngle = this.value; renderAllShapes(); });
+  document.getElementById('rightLegXSlider').addEventListener('mousemove', function() { g_rightLegXAngle = this.value; renderAllShapes(); });
+  document.getElementById('rightLegYSlider').addEventListener('mousemove', function() { g_rightLegYAngle = this.value; renderAllShapes(); });
+  document.getElementById('rightShinXSlider').addEventListener('mousemove', function() { g_rightShinXAngle = this.value; renderAllShapes(); });
+  document.getElementById('rightShinYSlider').addEventListener('mousemove', function() { g_rightShinYAngle = this.value; renderAllShapes(); });
+  document.getElementById('rightFootAngle').addEventListener('mousemove', function() { g_rightFootAngle = this.value; renderAllShapes(); });
+  document.getElementById('rightToeSlider').addEventListener('mousemove', function() { g_rightToeAngle = this.value; renderAllShapes(); });
+
+  document.getElementById('leftLegXSlider').addEventListener('mousemove', function() { g_leftLegXAngle = this.value; renderAllShapes(); });
+  document.getElementById('leftLegYSlider').addEventListener('mousemove', function() { g_leftLegYAngle = this.value; renderAllShapes(); });
+  document.getElementById('leftShinXSlider').addEventListener('mousemove', function() { g_leftShinXAngle = this.value; renderAllShapes(); });
+  document.getElementById('leftShinYSlider').addEventListener('mousemove', function() { g_leftShinYAngle = this.value; renderAllShapes(); });
+  document.getElementById('leftFootAngle').addEventListener('mousemove', function() { g_leftFootAngle = this.value; renderAllShapes(); });
+  document.getElementById('leftToeSlider').addEventListener('mousemove', function() { g_leftToeAngle = this.value; renderAllShapes(); });
 
   document.getElementById('start').onclick = function() { g_animated = true; g_startTime = performance.now() / 1000.0; };
   document.getElementById('stop').onclick = function() { g_animated = false; };

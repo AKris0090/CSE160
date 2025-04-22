@@ -27,9 +27,19 @@ let g_elbowAngle = -165;
 let g_wristAngle = 80;
 let g_wingFrontBackAngle = 0;
 
-let g_legAngle = -90;
-let g_shinAngle = -20;
-let g_toeAngle = -1.5;
+let g_leftLegXAngle = -90;
+let g_leftLegYAngle = 3;
+let g_leftShinXAngle = 0;
+let g_leftShinYAngle = 0;
+let g_leftFootAngle = 0;
+let g_leftToeAngle = 0;
+
+let g_rightLegXAngle = -90;
+let g_rightLegYAngle = -3;
+let g_rightShinXAngle = 0;
+let g_rightShinYAngle = 0;
+let g_rightFootAngle = 0;
+let g_rightToeAngle = 0;
 
 let identity = new Matrix4();
 
@@ -62,16 +72,22 @@ function renderVulture() {
     drawWing(m, 1);
     drawWing(m, -1);
 
-    drawLeg(m);
+    drawLeg(m, 0);
+    drawLeg(m, 1);
 }
 
-function drawToe(root, angle, length, talon = false) {
+function drawToe(root, angle, length, legType, talon = false) {
     applyColor(bottomBeakColor);
 
     let toe = new Matrix4();
     toe.set(root);
 
-    toe.translate(1, 0, 0).rotate(angle, 1, 0, 0).rotate(-60, 0, 0, 1).rotate(talon? g_toeAngle - 20: g_toeAngle, 0, 0, 1).scale(length / 3, 0.2, 0.2);
+    let g_toeAngle = legType === 1? g_rightToeAngle : g_leftToeAngle;
+    
+    toe.translate(1, 0, 0);
+    let g_footZAngle = legType === 1 ? g_rightFootAngle : g_leftFootAngle;
+    toe.rotate(g_footZAngle, 0, 0, 1); // Rotate entire foot around Z axis
+    toe.rotate(angle, 1, 0, 0).rotate(-70, 0, 0, 1).rotate(talon? g_toeAngle: g_toeAngle, 0, 0, 1).scale(length / 3, 0.2, 0.2);
     drawAltCube(toe);
     toe.translate(1, 0, 0).scale(1 / (length / 3), 5, 5).rotate(g_toeAngle * 3, 0, 0, 1).scale(length / 3, 0.2, 0.2);
     drawAltCube(toe);
@@ -82,42 +98,51 @@ function drawToe(root, angle, length, talon = false) {
     drawAltCube(toe);
 }
 
-function drawShin(root) {
+function drawShin(root, legType) {
     applyColor(wingColor);
     let shin = new Matrix4();
     shin.set(root);
 
-    shin.translate(1.85, -0.25, 0).rotate(g_shinAngle, 0, 0, 1);
-    shin.scale(1.05, 0.25, 0.25);
-    drawAltCube(shin);
-    shin.scale(1/1.05, 4, 4);
+    if(legType === 1) {
+        shin.translate(1.85, -0.25, 0).rotate(g_leftShinXAngle, 0, 0, 1).rotate(g_leftShinYAngle, 0, 1, 0);
+        shin.scale(1.05, 0.25, 0.25);
+        drawAltCube(shin);
+        shin.scale(1/1.05, 4, 4);
+    } else {
+        shin.translate(1.85, -0.25, 0).rotate(g_rightShinXAngle, 0, 0, 1).rotate(g_rightShinYAngle, 0, 1, 0);
+        shin.scale(1.05, 0.25, 0.25);
+        drawAltCube(shin);
+        shin.scale(1/1.05, 4, 4);
+    }
 
-    // TODO: foot rotation changes
+    shin.rotate(legType===1?1.5:-1.5, 1, 0, 0);
 
-    drawToe(shin, 30, 1.5);
-    drawToe(shin, 0, 2);
-    drawToe(shin, -30, 1.5);
-    drawToe(shin, 180, 1.5, true);
+    drawToe(shin, 30, 1.5, legType);
+    drawToe(shin, 0, 2, legType);
+    drawToe(shin, -30, 1.5, legType);
+    drawToe(shin, 180, 1.5, legType, true);
 }
 
-function drawLeg(root) {
+function drawLeg(root, legType) {
     applyColor(primaryFeatherColor);
 
     let thigh = new Matrix4();
 
-    thigh.set(root);
-    thigh.translate(-2.571, -0.621, -0.563).rotate(g_legAngle, 0, 0, 1)
-    drawShin(thigh);
-    applyColor(secondaryFeatherColor);
-    thigh.scale(1.168 * 2, 0.593 * 2, 0.39 * 2);
-    drawAltCube(thigh);
-
-    thigh.set(root);
-    thigh.translate(-2.571, -0.621, 0.563).rotate(g_legAngle, 0, 0, 1);
-    drawShin(thigh);
-    applyColor(secondaryFeatherColor);
-    thigh.scale(1.168 * 2, 0.593 * 2, 0.39 * 2);
-    drawAltCube(thigh);
+    if(legType === 1) {
+        thigh.set(root);
+        thigh.translate(-2.571, -0.621, -0.563).rotate(g_leftLegXAngle, 0, 0, 1).rotate(g_leftLegYAngle, 0, 1, 0);
+        drawShin(thigh, legType);
+        applyColor(secondaryFeatherColor);
+        thigh.scale(1.168 * 2, 0.593 * 2, 0.39 * 2);
+        drawAltCube(thigh);
+    } else {
+        thigh.set(root);
+        thigh.translate(-2.571, -0.621, 0.563).rotate(g_rightLegXAngle, 0, 0, 1).rotate(g_rightLegYAngle, 0, 1, 0)
+        drawShin(thigh, legType);
+        applyColor(secondaryFeatherColor);
+        thigh.scale(1.168 * 2, 0.593 * 2, 0.39 * 2);
+        drawAltCube(thigh);
+    }
 }
 
 function drawWing(root, mirror) {
@@ -165,8 +190,6 @@ function drawPrimaryFeather(root, angle, angle2, angle3, length, width, height =
 }
 
 // TODO: FIX FOREARM TOP PRIMARY FEATHERS CLIPPING?
-
-// TODO: LEGS
 
 // TODO: FACE DECOR
 
@@ -265,15 +288,15 @@ function drawForeArm(root) {
     // flight feathers
     foreArm.set(root);
     foreArm.translate(-0.25, 1.05, 1);
-    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.5, 2.4, lerpVal(0, 90, t));
+    drawFlightFeather(foreArm, lerpVal(10, 98, t), lerpVal(0, -50, t), 3.5, 2.4, lerpVal(0, 90, t));
     foreArm.translate(0, 0, 2.5);
-    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.6, 2.4, lerpVal(0, 90, t));
+    drawFlightFeather(foreArm, lerpVal(10, 98, t), lerpVal(0, -50, t), 3.6, 2.4, lerpVal(0, 90, t));
     foreArm.translate(0, 0, 2.5);
-    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.8, 2.4, lerpVal(0, 90, t));
+    drawFlightFeather(foreArm, lerpVal(10, 98, t), lerpVal(0, -50, t), 3.8, 2.4, lerpVal(0, 90, t));
     foreArm.translate(0, 0, 2.5);
-    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.85, 2.4, lerpVal(0, 90, t));
+    drawFlightFeather(foreArm, lerpVal(10, 98, t), lerpVal(0, -50, t), 3.85, 2.4, lerpVal(0, 90, t));
     foreArm.translate(0, 0, 2.5);
-    drawFlightFeather(foreArm, lerpVal(10, 90, t), lerpVal(0, -50, t), 3.9, 2.4, lerpVal(0, 90, t));
+    drawFlightFeather(foreArm, lerpVal(10, 98, t), lerpVal(0, -50, t), 3.9, 2.4, lerpVal(0, 90, t));
 
     applyColor(wingColor);
     foreArm.set(root).translate(0, 0, -1.5).scale(1, 1, 7).translate(0, 0, 1);
@@ -412,9 +435,9 @@ function drawBody(root) {
     drawCube(body);
 
     // brown back body
-    body.set(root);
-    body.translate(-2.575, 0.381, 0).rotate(30, 0, 0, 1).scale(0.673, 1.594, 0.417);
-    drawCube(body);
+    // body.set(root);
+    // body.translate(-2.575, 0.381, 0).rotate(30, 0, 0, 1).scale(0.673, 1.594, 0.417);
+    // drawCube(body);
 
     // tailbone
     body.set(root);
