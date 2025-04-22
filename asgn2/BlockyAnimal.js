@@ -34,8 +34,8 @@ let a_Normal;
 let u_FragColor;
 let u_ModelMatrix;
 let u_GlobalRotateMatrix;
-let angleX = -90;
-let angleY = 45;
+let angleX = 55;
+let angleY = 0;
 let g_lastX = 0;
 let g_lastY = 0;
 let g_Zoom = 10;
@@ -110,8 +110,14 @@ function addActionsForHtmlUI() {
   document.getElementById('wingSlider').addEventListener('mousemove', function() { g_leftWingAngle = this.value; renderAllShapes(); });
   document.getElementById('elbowSlider').addEventListener('mousemove', function() { g_elbowAngle = this.value; renderAllShapes(); });
   document.getElementById('handSlider').addEventListener('mousemove', function() { g_wristAngle = this.value; renderAllShapes(); });
+  document.getElementById('wingFrontBackSlider').addEventListener('mousemove', function() { g_wingFrontBackAngle = this.value; renderAllShapes(); });
+  document.getElementById('tailSlider').addEventListener('mousemove', function() { g_tailAngle = this.value; renderAllShapes(); });
 
-  document.getElementById('headSlider').addEventListener('mousemove', function() { g_headAngle = this.value; renderAllShapes(); });
+  document.getElementById('headSlider').addEventListener('mousemove', function() { g_headX = this.value; renderAllShapes(); });
+  document.getElementById('headYSlider').addEventListener('mousemove', function() { g_headY = this.value; renderAllShapes(); });
+
+  document.getElementById('legSlider').addEventListener('mousemove', function() { g_legAngle = this.value; renderAllShapes(); });
+  document.getElementById('shinSlider').addEventListener('mousemove', function() { g_shinAngle = this.value; renderAllShapes(); });
 
   document.getElementById('start').onclick = function() { g_animated = true; g_startTime = performance.now() / 1000.0; };
   document.getElementById('stop').onclick = function() { g_animated = false; };
@@ -191,18 +197,22 @@ function main() {
   }})
 
   canvas.addEventListener('wheel', function(ev) {
-    g_Zoom += ev.mouseWheelDelta;
+    console.log(ev.deltaY);
+    ev.preventDefault();
+    g_Zoom += ev.deltaY / 100;
+    renderAllShapes();
   })
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-  //requestAnimationFrame(tick);
-
   g_globalRotateMatrix = new Matrix4();
   g_ViewProjection.setPerspective(75, canvas.width/canvas.height, 0.1, 1000);
   g_vulture = new Vulture();
   renderAllShapes();
+
+  
+  //requestAnimationFrame(tick);
 }
 
 function clearCanvas() {
