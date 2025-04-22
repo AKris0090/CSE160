@@ -1,4 +1,4 @@
-const cubeVertices = new Float32Array([
+const cubeVertices = new Float32Array([ // first cube is blender cube, from -1 to 1 with each edge length 2
     -1, -1,  1,   1,  1,  1,   1, -1,  1,
     -1, -1,  1,  -1,  1,  1,   1,  1,  1,
     -1, -1, -1,   1, -1, -1,   1,  1, -1,
@@ -12,7 +12,7 @@ const cubeVertices = new Float32Array([
     -1, -1, -1,  -1,  1,  1,  -1, -1,  1,
     -1, -1, -1,  -1,  1, -1,  -1,  1,  1,
 
-    0, -0.5,  0.5,   1,  0.5,  0.5,   1, -0.5,  0.5,
+    0, -0.5,  0.5,   1,  0.5,  0.5,   1, -0.5,  0.5, // second cube is cube from 0 to 1 on x, then -0.5 to 0.5 on all other axis
     0, -0.5,  0.5,   0,  0.5,  0.5,   1,  0.5,  0.5,
     0, -0.5, -0.5,   1, -0.5, -0.5,   1,  0.5, -0.5,
     0, -0.5, -0.5,   1,  0.5, -0.5,   0,  0.5, -0.5,

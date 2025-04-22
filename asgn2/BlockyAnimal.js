@@ -43,6 +43,7 @@ let g_Zoom = 10;
 let g_ViewProjection = new Matrix4();
 let g_globalRotateMatrix;
 let g_vulture;
+let g_area;
 
 let g_animated = false;
 let g_cameraAngle = 0;
@@ -220,10 +221,11 @@ function main() {
   g_globalRotateMatrix = new Matrix4();
   g_ViewProjection.setPerspective(75, canvas.width/canvas.height, 0.1, 1000);
   g_vulture = new Vulture();
+  g_area = new Area();
   renderAllShapes();
 
   
-  //requestAnimationFrame(tick);
+  requestAnimationFrame(tick);
 }
 
 function clearCanvas() {
@@ -247,6 +249,7 @@ function renderAllShapes() {
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+  g_area.render();
   g_vulture.render();
 
   var duration = performance.now() - startTime;
