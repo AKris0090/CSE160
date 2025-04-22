@@ -29,6 +29,7 @@ let g_wingFrontBackAngle = 0;
 
 let g_legAngle = -90;
 let g_shinAngle = -20;
+let g_toeAngle = -1.5;
 
 let identity = new Matrix4();
 
@@ -64,14 +65,39 @@ function renderVulture() {
     drawLeg(m);
 }
 
+function drawToe(root, angle, length, talon = false) {
+    applyColor(bottomBeakColor);
+
+    let toe = new Matrix4();
+    toe.set(root);
+
+    toe.translate(1, 0, 0).rotate(angle, 1, 0, 0).rotate(-60, 0, 0, 1).rotate(talon? g_toeAngle - 20: g_toeAngle, 0, 0, 1).scale(length / 3, 0.2, 0.2);
+    drawAltCube(toe);
+    toe.translate(1, 0, 0).scale(1 / (length / 3), 5, 5).rotate(g_toeAngle * 3, 0, 0, 1).scale(length / 3, 0.2, 0.2);
+    drawAltCube(toe);
+
+    // apply talon color
+    applyColor(headColor);
+    toe.translate(1, 0, 0).scale(1 / (length / 3), 5, 5).rotate(g_toeAngle * 5, 0, 0, 1).scale(0.3, 0.15, 0.05);
+    drawAltCube(toe);
+}
+
 function drawShin(root) {
+    applyColor(wingColor);
     let shin = new Matrix4();
     shin.set(root);
 
     shin.translate(1.85, -0.25, 0).rotate(g_shinAngle, 0, 0, 1);
-    // TODO: DRAW FOOT - ONE JOINT TO CONTROL GRIP
     shin.scale(1.05, 0.25, 0.25);
     drawAltCube(shin);
+    shin.scale(1/1.05, 4, 4);
+
+    // TODO: foot rotation changes
+
+    drawToe(shin, 30, 1.5);
+    drawToe(shin, 0, 2);
+    drawToe(shin, -30, 1.5);
+    drawToe(shin, 180, 1.5, true);
 }
 
 function drawLeg(root) {
@@ -82,12 +108,14 @@ function drawLeg(root) {
     thigh.set(root);
     thigh.translate(-2.571, -0.621, -0.563).rotate(g_legAngle, 0, 0, 1)
     drawShin(thigh);
+    applyColor(secondaryFeatherColor);
     thigh.scale(1.168 * 2, 0.593 * 2, 0.39 * 2);
     drawAltCube(thigh);
 
     thigh.set(root);
     thigh.translate(-2.571, -0.621, 0.563).rotate(g_legAngle, 0, 0, 1);
     drawShin(thigh);
+    applyColor(secondaryFeatherColor);
     thigh.scale(1.168 * 2, 0.593 * 2, 0.39 * 2);
     drawAltCube(thigh);
 }

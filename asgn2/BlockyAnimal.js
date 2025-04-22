@@ -118,6 +118,7 @@ function addActionsForHtmlUI() {
 
   document.getElementById('legSlider').addEventListener('mousemove', function() { g_legAngle = this.value; renderAllShapes(); });
   document.getElementById('shinSlider').addEventListener('mousemove', function() { g_shinAngle = this.value; renderAllShapes(); });
+  document.getElementById('toeSlider').addEventListener('mousemove', function() { g_toeAngle = this.value; renderAllShapes(); });
 
   document.getElementById('start').onclick = function() { g_animated = true; g_startTime = performance.now() / 1000.0; };
   document.getElementById('stop').onclick = function() { g_animated = false; };
