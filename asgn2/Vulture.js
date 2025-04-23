@@ -29,14 +29,13 @@ function updateVultureAnimation(vul) {
         g_moving = true;
         g_wingNeedCatchup = true && !g_keepWings;
 
-        g_keepWings = currentAnim.keepWing;
-        if(currentAnim.keepWing) {
+        if(currentAnim.keepWing && g_keepWings === false) {
             g_keepWings = true;
             g_previousWingO = currentAnim.wingAngle;
             g_previousUpWingO = currentAnim.wingUpAngle;
             g_previousDelay = currentAnim.delay;
             g_previousStartTime = g_animStartTime;
-        } else {
+        } else if(currentAnim.keepWing === false && g_keepWings){
             g_keepWings = false;
             g_previousWingO = null;
             g_previousUpWingO = null;
@@ -48,11 +47,9 @@ function updateVultureAnimation(vul) {
     if(currentAnim) {
         let elapsed = g_currentTime - g_animStartTime;
 
-        if(elapsed < currentAnim.delay) {
+        while(currentAnim.fullDelay && elapsed < currentAnim.fullDelay) {
             return;
         }
-
-        elapsed -= currentAnim.delay;
 
         let duration = currentAnim.time;
         let a = elapsed / duration;
@@ -60,7 +57,42 @@ function updateVultureAnimation(vul) {
         let from = g_startPose;
         let to = currentAnim;
 
-        currentAnim.posX? g_X = lerpVal(from.posX, to.posX, a): null;
+        let flapStartTime = g_animStartTime + currentAnim.delay;
+        let elapsedFlap = g_currentTime - flapStartTime;
+        elapsedFlap = Math.max(0, elapsedFlap); 
+
+        if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
+            let g_previousO = currentAnim.wingAngle;
+            if(g_previousO.func === 'sine') {
+                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+            } else {
+                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+            }
+            g_leftWingAngle = val;
+        } else {
+            currentAnim.wingAngle.position? g_leftWingAngle = lerpVal(from.wingAngle.position, to.wingAngle.position, a): null;
+        }
+
+        if(currentAnim.wingUpAngle.enabled && currentAnim.wingUpAngle.enabled === true) {
+            let g_previousO = currentAnim.wingUpAngle;
+            let val;
+            if(g_previousO.func === 'sine') {
+                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+            } else {
+                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+            }
+
+            g_wingFrontBackAngle = val;
+        } else {
+            currentAnim.wingUpAngle.position? g_wingFrontBackAngle = lerpVal(from.wingUpAngle.position, to.wingUpAngle.position, a): null;
+        }
+
+        if(elapsed < currentAnim.delay) {
+            return;
+        }
+
+        elapsed -= currentAnim.delay;
+        a = elapsed / duration;
 
         // apply all animation transformations
         currentAnim.rotX? g_angleX = lerpVal(from.rotX, to.rotX, a): null;
@@ -80,31 +112,11 @@ function updateVultureAnimation(vul) {
 
         currentAnim.tailAngle? g_tailAngle = lerpVal(from.tailAngle, to.tailAngle, a): null;
 
-        if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
-            let g_previousO = currentAnim.wingAngle;
-            if(g_previousO.func === 'sine') {
-                g_wingNeedCatchup? val = wingSmoothing(elapsed, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedSine(elapsed, g_previousO);
-            } else {
-                g_wingNeedCatchup? val = wingSmoothing(elapsed, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedCosine(elapsed, g_previousO);
-            }
-            g_leftWingAngle = val;
-        } else {
-            currentAnim.wingAngle.position? g_leftWingAngle = lerpVal(from.wingAngle.position, to.wingAngle.position, a): null;
-        }
+        currentAnim.posX? g_X = lerpVal(from.posX, to.posX, a): null;
+        currentAnim.posY? g_Y = lerpVal(from.posY, to.posY, a): null;
 
-        if(currentAnim.wingUpAngle.enabled && currentAnim.wingUpAngle.enabled === true) {
-            let g_previousO = currentAnim.wingUpAngle;
-            let val;
-            if(g_previousO.func === 'sine') {
-                g_wingNeedCatchup? val = wingSmoothing(elapsed, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedSine(elapsed, g_previousO);
-            } else {
-                g_wingNeedCatchup? val = wingSmoothing(elapsed, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedCosine(elapsed, g_previousO);
-            }
-
-            g_wingFrontBackAngle = val;
-        } else {
-            currentAnim.wingUpAngle.position? g_wingFrontBackAngle = lerpVal(from.wingUpAngle.position, to.wingUpAngle.position, a): null;
-        }
+        currentAnim.leftToeAngle? g_leftToeAngle = lerpVal(from.leftToeAngle, to.leftToeAngle, a): null;
+        currentAnim.rightToeAngle? g_rightToeAngle = lerpVal(from.rightToeAngle, to.rightToeAngle, a): null;
 
         if(elapsed > g_catchupTime && g_wingNeedCatchup) {
             g_wingNeedCatchup = false;
@@ -114,7 +126,8 @@ function updateVultureAnimation(vul) {
         if(a >= 1) {
             currentAnim = null;
         }
-    } else if (g_keepWings) {
+    } 
+    if ((g_keepWings && currentAnim === null) || (g_keepWings && currentAnim?.wingAngle.enabled === false && currentAnim?.wingUpAngle.enabled === false)) {
         let elapsed = g_currentTime - g_previousStartTime - g_previousDelay;
         if(g_previousWingO.func === 'sine') {
             g_leftWingAngle = getPhaseCorrectedSine(elapsed, g_previousWingO);
@@ -204,6 +217,9 @@ function getCurrentPose() {
         },
 
         tailAngle: g_tailAngle,
+
+        leftToeAngle: g_leftToeAngle,
+        rightToeAngle: g_rightToeAngle,
     };
 }
 
@@ -237,32 +253,171 @@ let startFlight = {
         enabled: false
     },
     wingUpAngle: {
-        position: -20,
+        position: -50,
         enabled: false
     },
     tailAngle: 10,
+    keepWing: false
 }
 
 let jumpOff = {
-    time: 25,
-    delay: 0.15,
+    time: 0.3,
+    delay: 0.2,
+    posX: -1.5,
+    posY: 1,
+    rotZ: 20,
+    rightLegX: -80,
+    leftLegX: -80,
+    rightShinX: -40,
+    leftShinX: -40,
+    wingAngle: {
+        enabled: false,
+        position: 15,
+        func: "sine",
+        a: 50,
+        f: 5,
+        s: 0,
+        v: 20,
+    },
+    wingUpAngle: {
+        enabled: false,
+        position: 30,
+        func: "cosine",
+        a: 80,
+        f: 5,
+        s: 0,
+        v: 40,
+    },
+    keepWing: false,
+}
+
+let flap = {
+    time: 0.0,
+    delay: 0,
     wingAngle: {
         enabled: true,
         func: "sine",
         a: 30,
-        f: 3.5,
-        s: 0,
+        f: 5,
+        s: 0.3,
         v: 20,
     },
     wingUpAngle: {
         enabled: true,
         func: "cosine",
         a: 50,
-        f: 3.5,
-        s: 0,
+        f: 5,
+        s: 0.3,
         v: 0,
     },
     keepWing: true,
+}
+
+let moveCrateQuarter = {
+    time: 0.35,
+    delay: 0,
+    posX: -3.5,
+    posY: 5,
+    rightLegX: -45,
+    leftLegX: -45,
+    rightShinX: 20,
+    leftShinX: 20,
+    leftToeAngle: 15,
+    rightToeAngle: 15,
+    wingAngle: {
+        enabled: false,
+    },
+    wingUpAngle: {
+        enabled: false,
+    },
+    keepWing: true,
+}
+
+let moveQuarter = {
+    time: 0.3333,
+    delay: 0,
+    posX: -7,
+    posY: 7,
+    wingAngle: {
+        enabled: false,
+        func: "sine",
+        a: 30,
+        f: 5,
+        s: 0.3,
+        v: 20,
+    },
+    wingUpAngle: {
+        enabled: false,
+        func: "cosine",
+        a: 50,
+        f: 5,
+        s: 0.3,
+        v: 0,
+    },
+    keepWing: true,
+}
+
+let moveTilt = {
+    time: 0.75,
+    delay: 0,
+    posX: -10.5,
+    posY: 7,
+    rotZ: -15,
+    headY: 30,
+    rightLegX: -130,
+    leftLegX: -130,
+    rightShinX: -20,
+    leftShinX: -20,
+    leftToeAngle: 5,
+    rightToeAngle: 5,
+    wingAngle: {
+        enabled: false,
+        func: "sine",
+        a: 30,
+        f: 5,
+        s: 0.3,
+        v: 20,
+    },
+    wingUpAngle: {
+        enabled: false,
+        func: "cosine",
+        a: 50,
+        f: 5,
+        s: 0.3,
+        v: 0,
+    },
+    keepWing: true,
+}
+
+let moveLand = {
+    time: 0.3333,
+    delay: 0,
+    posX: -12,
+    posY: 6,
+    wingAngle: {
+        enabled: true,
+        position: 15,
+    },
+    wingUpAngle: {
+        enabled: true,
+        position: 30,
+    },
+    keepWing: false,
+}
+
+let moveReset = {
+    time: 0.3333,
+    delay: 0,
+    posX: -7,
+    posY: 7,
+    rotZ: 15,
+    wingAngle: {
+        enabled: false,
+    },
+    wingUpAngle: {
+        enabled: false,
+    },
+    keepWing: false,
 }
 
 let currentAnim = null;
