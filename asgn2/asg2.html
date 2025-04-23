@@ -22,41 +22,51 @@ my submission's special features are notes in the <p> tags below the canvas. I h
     <p id="output"></p>
 
     <p></p>
-    Head Angle X: <input type="range" id="headSlider" name="size" min="135" max="225" step="0.1" value="180"/>
-    Head Angle Y: <input type="range" id="headYSlider" name="size" min="-25" max="19.2" step="0.1" value="19.2"/>
-    <p></p>
-    Top Beak Angle: <input type="range" id="topBeakSlider" name="size" min="-6" max="14" step="0.1" value="14"/>
-    Bottom Beak Angle: <input type="range" id="bottomBeakSlider" name="size" min="10" max="30" step="0.1" value="10"/>
+    Body Position X: <input type="range" id="bodyXSlider" min="-20" max="20" step="0.1" value="0"/>
+    Body Position Y: <input type="range" id="bodyYSlider" min="-70" max="70" step="0.1" value="0"/>
+    Body Position Z: <input type="range" id="bodyZSlider" min="-70" max="70" step="0.1" value="0"/>
 
     <p></p>
-    Wing Angle: <input type="range" id="wingSlider" name="size" min="0" max="70" step="0.1" value="70"/>
-    Secondary Wing Angle: <input type="range" id="wingFrontBackSlider" name="size" min="-50" max="50" step="0.1" value="0"/>
+    Body Angle X: <input type="range" id="bodyAngleXSlider" min="-180" max="180" step="0.1" value="0"/>
+    Body Angle Y: <input type="range" id="bodyAngleYSlider" min="-180" max="180" step="0.1" value="0"/>
+    Body Angle Z: <input type="range" id="bodyAngleZSlider" min="-180" max="180" step="0.1" value="0"/>
 
     <p></p>
-    Tail Angle: <input type="range" id="tailSlider" name="size" min="0" max="10" step="0.1" value="0"/>
+    Head Angle X: <input type="range" id="headSlider" min="135" max="225" step="0.1" value="180"/>
+    Head Angle Y: <input type="range" id="headYSlider" min="-25" max="19.2" step="0.1" value="19.2"/>
+    <p></p>
+    Top Beak Angle: <input type="range" id="topBeakSlider" min="-6" max="14" step="0.1" value="14"/>
+    Bottom Beak Angle: <input type="range" id="bottomBeakSlider" min="10" max="30" step="0.1" value="10"/>
 
     <p></p>
-    Wing 2 Angle: <input type="range" id="elbowSlider" name="size" min="-165" max="-50" step="0.1" value="-165"/>
-    Wing 3 Angle: <input type="range" id="handSlider" name="size" min="50" max="170" step="0.1" value="80"/>
+    Wing Angle: <input type="range" id="wingSlider" min="0" max="70" step="0.1" value="70"/>
+    Secondary Wing Angle: <input type="range" id="wingFrontBackSlider" min="-50" max="50" step="0.1" value="0"/>
 
     <p></p>
-    Right Leg Angle X: <input type="range" id="rightLegXSlider" name="size" min="-110" max="-30" step="0.1" value="-90"/>
-    Right Leg Angle Y: <input type="range" id="rightLegYSlider" name="size" min="-3" max="-6" step="0.1" value="-3"/>
-    Right Shin Angle X: <input type="range" id="rightShinXSlider" name="size" min="-50" max="50" step="0.1" value="0"/>
-    Right Shin Angle Y: <input type="range" id="rightShinYSlider" name="size" min="-50" max="50" step="0.1" value="0"/>
-    Right Foot Angle: <input type="range" id="rightFootAngle" name="size" min="-50" max="50" step="0.1" value="0"/>
-    Right Toe Angle: <input type="range" id="rightToeSlider" name="size" min="-1.5" max="20" step="0.1" value="0"/>
+    Tail Angle: <input type="range" id="tailSlider" min="0" max="10" step="0.1" value="0"/>
 
     <p></p>
-    Left Leg Angle X: <input type="range" id="leftLegXSlider" name="size" min="-110" max="-30" step="0.1" value="-90"/>
-    Left Leg Angle Y: <input type="range" id="leftLegYSlider" name="size" min="3" max="6" step="0.1" value="3"/>
-    Left Shin Angle X: <input type="range" id="leftShinXSlider" name="size" min="-50" max="50" step="0.1" value="0"/>
-    Left Shin Angle Y: <input type="range" id="leftShinYSlider" name="size" min="-50" max="50" step="0.1" value="0"/>
-    Left Foot Angle: <input type="range" id="leftFootAngle" name="size" min="-50" max="50" step="0.1" value="0"/>
-    Left Toe Angle: <input type="range" id="leftToeSlider" name="size" min="-1.5" max="20" step="0.1" value="0"/>
+    Wing 2 Angle: <input type="range" id="elbowSlider" min="-165" max="-50" step="0.1" value="-165"/>
+    Wing 3 Angle: <input type="range" id="handSlider" min="50" max="170" step="0.1" value="80"/>
 
     <p></p>
-    Camera Angle: <input type="range" id="angleSlider" name="size" min="0" max="360" step="0.1" value="0"/>
+    Right Leg Angle X: <input type="range" id="rightLegXSlider" min="-110" max="-30" step="0.1" value="-90"/>
+    Right Leg Angle Y: <input type="range" id="rightLegYSlider" min="-3" max="-6" step="0.1" value="-3"/>
+    Right Shin Angle X: <input type="range" id="rightShinXSlider" min="-90" max="90" step="0.1" value="0"/>
+    Right Shin Angle Y: <input type="range" id="rightShinYSlider" min="-50" max="50" step="0.1" value="0"/>
+    Right Foot Angle: <input type="range" id="rightFootAngle" min="-50" max="50" step="0.1" value="0"/>
+    Right Toe Angle: <input type="range" id="rightToeSlider" min="-1.5" max="20" step="0.1" value="0"/>
+
+    <p></p>
+    Left Leg Angle X: <input type="range" id="leftLegXSlider" min="-110" max="-30" step="0.1" value="-90"/>
+    Left Leg Angle Y: <input type="range" id="leftLegYSlider" min="3" max="6" step="0.1" value="3"/>
+    Left Shin Angle X: <input type="range" id="leftShinXSlider" min="-90" max="90" step="0.1" value="0"/>
+    Left Shin Angle Y: <input type="range" id="leftShinYSlider" min="-50" max="50" step="0.1" value="0"/>
+    Left Foot Angle: <input type="range" id="leftFootAngle" min="-50" max="50" step="0.1" value="0"/>
+    Left Toe Angle: <input type="range" id="leftToeSlider" min="-1.5" max="20" step="0.1" value="0"/>
+
+    <p></p>
+    Camera Angle: <input type="range" id="angleSlider" min="0" max="360" step="0.1" value="0"/>
 
     <p></p>
     Animation:

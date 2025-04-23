@@ -114,6 +114,14 @@ function addActionsForHtmlUI() {
   document.getElementById('wingFrontBackSlider').addEventListener('mousemove', function() { g_wingFrontBackAngle = this.value; renderAllShapes(); });
   document.getElementById('tailSlider').addEventListener('mousemove', function() { g_tailAngle = this.value; renderAllShapes(); });
 
+  document.getElementById('bodyAngleXSlider').addEventListener('mousemove', function() { g_angleX = this.value; renderAllShapes(); });
+  document.getElementById('bodyAngleYSlider').addEventListener('mousemove', function() { g_angleY = this.value; renderAllShapes(); });
+  document.getElementById('bodyAngleZSlider').addEventListener('mousemove', function() { g_angleZ = this.value; renderAllShapes(); });
+
+  document.getElementById('bodyXSlider').addEventListener('mousemove', function() { g_X = this.value; renderAllShapes(); });
+  document.getElementById('bodyYSlider').addEventListener('mousemove', function() { g_Y = this.value; renderAllShapes(); });
+  document.getElementById('bodyZSlider').addEventListener('mousemove', function() { g_Z = this.value; renderAllShapes(); });
+
   document.getElementById('headSlider').addEventListener('mousemove', function() { g_headX = this.value; renderAllShapes(); });
   document.getElementById('headYSlider').addEventListener('mousemove', function() { g_headY = this.value; renderAllShapes(); });
 
@@ -197,6 +205,11 @@ function main() {
   canvas.addEventListener('mousedown', function(ev) {
     g_lastX = ev.x;
     g_lastY = ev.y;
+
+    if(ev.buttons == 1 && g_moving === false) {
+      g_vulture.queuedAnims.push(jumpOff);
+      g_vulture.queuedAnims.push(startFlight);
+    }
   })
 
   canvas.addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {
@@ -209,11 +222,11 @@ function main() {
   }})
 
   canvas.addEventListener('wheel', function(ev) {
-    console.log(ev.deltaY);
     ev.preventDefault();
     g_Zoom += ev.deltaY / 100;
     renderAllShapes();
   })
+  
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -233,9 +246,17 @@ function clearCanvas() {
   renderAllShapes();
 }
 
+let g_currentTime = -1;
+let g_time = -1;
+
 function renderAllShapes() {
-  var startTime = performance.now();
-  g_seconds = performance.now() / 1000.0 - g_startTime;
+  let now = performance.now();
+  let nowSeconds = now / 1000;
+  g_time = nowSeconds;
+
+  let frameTime = now - g_startTime;
+  g_seconds = nowSeconds - (g_startTime / 1000);
+  g_currentTime = nowSeconds;
 
   // if(g_animated) updateAnimation();
   var cameraMatrix = new Matrix4();
@@ -252,8 +273,9 @@ function renderAllShapes() {
   g_area.render();
   g_vulture.render();
 
-  var duration = performance.now() - startTime;
-  sendTextToHTML("ms: " + duration.toFixed(2) + " fps: " + (1000/duration).toFixed(2));
+  sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000/frameTime).toFixed(2));
+
+  g_startTime = now;
 }
 
 function tick() {

@@ -1,9 +1,10 @@
 class Vulture {
     constructor() {
+        this.queuedAnims = [];
     }
   
     render() {
-        renderVulture(false);
+        renderVulture(this);
     }
 }
 
@@ -11,13 +12,145 @@ function applyColor(rgba) {
     gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
-function updateVultureAnimation() {
-    g_leftWingAngle = (Math.sin(g_seconds * 3) * 30) + 20;
-    g_wingFrontBackAngle = (Math.cos(g_seconds * 3) * 50);
+function wingSmoothing(elapsed, o, from) {
+    let a = Math.min(elapsed / g_catchupTime, 1);
+    if(o.func === "sine") {
+        return lerpVal(from, getPhaseCorrectedSine(g_catchupTime, o), a);
+    } else {
+        return lerpVal(from, getPhaseCorrectedCosine(g_catchupTime, o), a);
+    }
 }
 
+function updateVultureAnimation(vul) {
+    if (!currentAnim && vul.queuedAnims && vul.queuedAnims.length > 0) {
+        currentAnim = vul.queuedAnims.pop();
+        g_animStartTime = g_currentTime;
+        g_startPose = getCurrentPose();
+        g_moving = true;
+        g_wingNeedCatchup = true && !g_keepWings;
+
+        g_keepWings = currentAnim.keepWing;
+        if(currentAnim.keepWing) {
+            g_keepWings = true;
+            g_previousWingO = currentAnim.wingAngle;
+            g_previousUpWingO = currentAnim.wingUpAngle;
+            g_previousDelay = currentAnim.delay;
+            g_previousStartTime = g_animStartTime;
+        } else {
+            g_keepWings = false;
+            g_previousWingO = null;
+            g_previousUpWingO = null;
+            g_previousDelay = -1;
+            g_previousStartTime = 0;
+        }
+    }
+
+    if(currentAnim) {
+        let elapsed = g_currentTime - g_animStartTime;
+
+        if(elapsed < currentAnim.delay) {
+            return;
+        }
+
+        elapsed -= currentAnim.delay;
+
+        let duration = currentAnim.time;
+        let a = elapsed / duration;
+
+        let from = g_startPose;
+        let to = currentAnim;
+
+        currentAnim.posX? g_X = lerpVal(from.posX, to.posX, a): null;
+
+        // apply all animation transformations
+        currentAnim.rotX? g_angleX = lerpVal(from.rotX, to.rotX, a): null;
+        currentAnim.rotY? g_angleY = lerpVal(from.rotY, to.rotY, a): null;
+        currentAnim.rotZ? g_angleZ = lerpVal(from.rotZ, to.rotZ, a): null;
+
+        currentAnim.headY? g_headY = lerpVal(from.headY, to.headY, a): null;
+
+        currentAnim.rightLegX? g_rightLegXAngle = lerpVal(from.rightLegX, to.rightLegX, a): null;
+        currentAnim.leftLegX? g_leftLegXAngle = lerpVal(from.leftLegX, to.leftLegX, a): null;
+
+        currentAnim.rightShinX? g_rightShinXAngle = lerpVal(from.rightShinX, to.rightShinX, a): null;
+        currentAnim.leftShinX? g_leftShinXAngle = lerpVal(from.leftShinX, to.leftShinX, a): null;
+
+        currentAnim.rightFoot? g_rightFootAngle = lerpVal(from.rightFoot, to.rightFoot, a): null;
+        currentAnim.leftFoot? g_leftFootAngle = lerpVal(from.leftFoot, to.leftFoot, a): null;
+
+        currentAnim.tailAngle? g_tailAngle = lerpVal(from.tailAngle, to.tailAngle, a): null;
+
+        if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
+            let g_previousO = currentAnim.wingAngle;
+            if(g_previousO.func === 'sine') {
+                g_wingNeedCatchup? val = wingSmoothing(elapsed, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedSine(elapsed, g_previousO);
+            } else {
+                g_wingNeedCatchup? val = wingSmoothing(elapsed, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedCosine(elapsed, g_previousO);
+            }
+            g_leftWingAngle = val;
+        } else {
+            currentAnim.wingAngle.position? g_leftWingAngle = lerpVal(from.wingAngle.position, to.wingAngle.position, a): null;
+        }
+
+        if(currentAnim.wingUpAngle.enabled && currentAnim.wingUpAngle.enabled === true) {
+            let g_previousO = currentAnim.wingUpAngle;
+            let val;
+            if(g_previousO.func === 'sine') {
+                g_wingNeedCatchup? val = wingSmoothing(elapsed, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedSine(elapsed, g_previousO);
+            } else {
+                g_wingNeedCatchup? val = wingSmoothing(elapsed, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedCosine(elapsed, g_previousO);
+            }
+
+            g_wingFrontBackAngle = val;
+        } else {
+            currentAnim.wingUpAngle.position? g_wingFrontBackAngle = lerpVal(from.wingUpAngle.position, to.wingUpAngle.position, a): null;
+        }
+
+        if(elapsed > g_catchupTime && g_wingNeedCatchup) {
+            g_wingNeedCatchup = false;
+            from.wingAngle.position = g_leftWingAngle; 
+        }
+
+        if(a >= 1) {
+            currentAnim = null;
+        }
+    } else if (g_keepWings) {
+        let elapsed = g_currentTime - g_previousStartTime - g_previousDelay;
+        if(g_previousWingO.func === 'sine') {
+            g_leftWingAngle = getPhaseCorrectedSine(elapsed, g_previousWingO);
+        } else {
+            g_leftWingAngle = getPhaseCorrectedCosine(elapsed, g_previousWingO);
+        }
+
+        if(g_previousUpWingO.func === 'sine') {
+            g_wingFrontBackAngle = getPhaseCorrectedSine(elapsed, g_previousUpWingO);
+        } else {
+            g_wingFrontBackAngle = getPhaseCorrectedCosine(elapsed, g_previousUpWingO);
+        }
+    }
+}
+
+let g_catchupTime = .35;
+let g_keepWings = false;
+let g_previousWingO = null;
+let g_previousUpWingO = null;
+let g_previousDelay = -1;
+let g_previousStartTime = -1;
+
+let g_wingNeedCatchup = false;
+let g_moving = false;
+let g_startPose = null;
+let g_animStartTime = -1;
 let g_topBeakAngle = 14;
 let g_bottomBeakAngle = 10;
+
+let g_X = 0;
+let g_Y = 0;
+let g_Z = 0;
+
+let g_angleX = 0;
+let g_angleY = 0;
+let g_angleZ = 0;
 
 let g_headX = 180;
 let g_headY = 19.2;
@@ -41,6 +174,39 @@ let g_rightShinYAngle = 0;
 let g_rightFootAngle = 0;
 let g_rightToeAngle = 0;
 
+function getCurrentPose() {
+    return {
+        posX: g_X,
+        posY: g_Y,
+        posZ: g_Z,
+
+        rotX: g_angleX,
+        rotY: g_angleY,
+        rotZ: g_angleZ,
+
+        headY: g_headY,
+
+        rightLegX: g_rightLegXAngle,
+        leftLegX: g_leftLegXAngle,
+
+        rightShinX: g_rightShinXAngle,
+        leftShinX: g_leftShinXAngle,
+
+        rightFoot: g_rightFootAngle,
+        leftFoot: g_leftFootAngle,
+
+        wingAngle: {
+            position: g_leftWingAngle,
+        },
+
+        wingUpAngle: {
+            position: g_wingFrontBackAngle,
+        },
+
+        tailAngle: g_tailAngle,
+    };
+}
+
 let identity = new Matrix4();
 
 let g_tailAngle = 0;
@@ -56,13 +222,57 @@ let primaryFeatherColor = [1, 0.45, 0.45, 1.0]
 
 let t = g_leftWingAngle / 80;
 
-function renderVulture() {
-    if(g_animated) {
-        updateVultureAnimation();
-    }
+let startFlight = {
+    time: 0.5,
+    delay: 0,
+    posX: -2.5,
+    rotZ: 40,
+    headY: -15,
+    rightLegX: -50,
+    leftLegX: -50,
+    rightShinX: -90,
+    leftShinX: -90,
+    wingAngle: {
+        position: 15,
+        enabled: false
+    },
+    wingUpAngle: {
+        position: -20,
+        enabled: false
+    },
+    tailAngle: 10,
+}
+
+let jumpOff = {
+    time: 25,
+    delay: 0.15,
+    wingAngle: {
+        enabled: true,
+        func: "sine",
+        a: 30,
+        f: 3.5,
+        s: 0,
+        v: 20,
+    },
+    wingUpAngle: {
+        enabled: true,
+        func: "cosine",
+        a: 50,
+        f: 3.5,
+        s: 0,
+        v: 0,
+    },
+    keepWing: true,
+}
+
+let currentAnim = null;
+
+function renderVulture(vul) {
+    updateVultureAnimation(vul);
     t = g_leftWingAngle / 80;
 
     var m = new Matrix4();
+    m.translate(g_X, g_Y, g_Z).rotate(g_angleX, 1, 0, 0).rotate(g_angleY, 0, 1, 0).rotate(g_angleZ, 0, 0, 1);
 
     drawBody(m);
 
@@ -579,4 +789,12 @@ function easeOutLerp(a, b, t) {
     }
   
     return a + (b - a) * t;
+}
+
+function getPhaseCorrectedSine(t, o) {
+    return Math.sin((t) * o.f + o.s) * o.a + o.v;
+}
+
+function getPhaseCorrectedCosine(t, o) {
+    return Math.cos((t) * o.f + o.s) * o.a + o.v;
 }

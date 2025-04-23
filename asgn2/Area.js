@@ -1,7 +1,7 @@
 class Area {
     constructor() {
         this.matrix = new Matrix4();
-        this.matrix.rotate(45, 0, 1, 0).scale(50, 2, 50);
+        this.matrix.rotate(45, 0, 1, 0).scale(2, 2, 2);
         this.newM = new Matrix4();
     }
   
