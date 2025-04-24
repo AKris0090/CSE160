@@ -38,7 +38,7 @@ let angleX = 55;
 let angleY = 0;
 let g_lastX = 0;
 let g_lastY = 0;
-let g_Zoom = 30;
+let g_Zoom = 40;
 
 let g_ViewProjection = new Matrix4();
 let g_globalRotateMatrix;
@@ -243,7 +243,11 @@ function main() {
   g_vulture = new Vulture();
   g_area = new Area();
 
-  //g_vulture.queuedAnims.push(moveLand);
+  g_vulture.queuedAnims.push(moveReset);
+  g_vulture.queuedAnims.push(moveFlapping);
+  g_vulture.queuedAnims.push(moveSetLeg);
+  g_vulture.queuedAnims.push(moveLand);
+  g_vulture.queuedAnims.push(moveBuffer);
   g_vulture.queuedAnims.push(moveTilt);
   g_vulture.queuedAnims.push(moveQuarter);
   g_vulture.queuedAnims.push(moveCrateQuarter);

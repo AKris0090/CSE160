@@ -48,7 +48,7 @@ function updateVultureAnimation(vul) {
             g_previousFrontWingO = currentAnim.wingFrontAngle;
             g_previousDelay = currentAnim.delay;
             g_previousStartTime = g_animStartTime;
-        } else if(currentAnim.keepWing === false && g_keepWings){
+        } else if(currentAnim.keepWing === false){
             g_keepWings = false;
             g_previousWingO = null;
             g_previousUpWingO = null;
@@ -75,7 +75,6 @@ function updateVultureAnimation(vul) {
         let elapsedFlap = g_currentTime - flapStartTime;
         elapsedFlap = Math.max(0, elapsedFlap); 
 
-        console.log(g_wingNeedCatchup);
         if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
             let g_previousO = currentAnim.wingAngle;
             if(g_previousO.func === 'sine') {
@@ -177,7 +176,7 @@ function updateVultureAnimation(vul) {
     }
 }
 
-let g_catchupTime = .35;
+let g_catchupTime = .25;
 let g_keepWings = false;
 let g_previousWingO = null;
 let g_previousUpWingO = null;
@@ -272,213 +271,6 @@ let identity = new Matrix4();
 let g_tailAngle = 0;
 
 let t = g_leftWingAngle / 80;
-
-let startFlight = {
-    time: 0.5,
-    delay: 0,
-    posX: -2.5,
-    rotZ: 40,
-    headY: -15,
-    rightLegX: -50,
-    leftLegX: -50,
-    rightShinX: -90,
-    leftShinX: -90,
-    wingAngle: {
-        position: 15,
-        enabled: false
-    },
-    wingUpAngle: {
-        position: -90,
-        enabled: false
-    },
-    wingFrontAngle: {
-        position: -40,
-        enabled: false
-    },
-    tailAngle: 10,
-    keepWing: false,
-    needCatch: false
-}
-
-let jumpOff = {
-    time: 0.3,
-    delay: 0.2,
-    posX: -1.5,
-    posY: 1,
-    rotZ: 20,
-    rightLegX: -80,
-    leftLegX: -80,
-    rightShinX: -40,
-    leftShinX: -40,
-    wingAngle: {
-        enabled: false,
-        position: 15,
-        func: "sine",
-        a: 50,
-        f: 5,
-        s: 0,
-        v: 20,
-    },
-    wingUpAngle: {
-        enabled: false,
-        position: 15,
-        func: "cosine",
-        a: 80,
-        f: 5,
-        s: 0,
-        v: 40,
-    },
-    wingFrontAngle: {
-        enabled: false,
-        position: -40,
-        func: "sine",
-        a: 15,
-        f: 5,
-        s: 0,
-        v: -45,
-    },
-    keepWing: false,
-    needCatch: true
-}
-
-let moveCrateQuarter = {
-    time: 0.35,
-    delay: 0,
-    posX: -3.5,
-    posY: 5,
-    rightLegX: -45,
-    leftLegX: -45,
-    rightShinX: 20,
-    leftShinX: 20,
-    leftToeAngle: 15,
-    rightToeAngle: 15,
-    wingAngle: {
-        enabled: true,
-        func: "sine",
-        a: 30,
-        f: 5,
-        s: 0.3,
-        v: 20,
-    },
-    wingUpAngle: {
-        enabled: true,
-        func: "cosine",
-        a: 80,
-        f: 5,
-        s: 0.3,
-        v: 0,
-    },
-    wingFrontAngle: {
-        enabled: true,
-        position: -40,
-        func: "sine",
-        a: 15,
-        f: 5,
-        s: 0,
-        v: -45,
-    },
-    keepWing: true,
-}
-
-let moveQuarter = {
-    time: 0.3333,
-    delay: 0,
-    posX: -7,
-    posY: 7,
-    wingAngle: {
-        enabled: false,
-        func: "sine",
-        a: 30,
-        f: 5,
-        s: 0.3,
-        v: 20,
-    },
-    wingUpAngle: {
-        enabled: false,
-        func: "cosine",
-        a: 80,
-        f: 5,
-        s: 0.3,
-        v: 0,
-    },
-    wingFrontAngle: {
-        enabled: false,
-        position: -40,
-    },
-    keepWing: true,
-}
-
-let moveTilt = {
-    time: 0.75,
-    delay: 0,
-    posX: -10.5,
-    posY: 7,
-    rotZ: -15,
-    headY: 25,
-    rightLegX: -130,
-    leftLegX: -130,
-    rightShinX: -20,
-    leftShinX: -20,
-    leftToeAngle: 5,
-    rightToeAngle: 5,
-    wingAngle: {
-        enabled: false,
-        func: "sine",
-        a: 30,
-        f: 5,
-        s: 0.3,
-        v: 20,
-    },
-    wingUpAngle: {
-        enabled: false,
-        func: "cosine",
-        a: 80,
-        f: 5,
-        s: 0.3,
-        v: 0,
-    },
-    wingFrontAngle: {
-        enabled: false,
-        position: -40,
-    },
-    keepWing: true,
-}
-
-let moveLand = {
-    time: 0.3333,
-    delay: 0,
-    posX: -12,
-    posY: 6,
-    wingAngle: {
-        enabled: true,
-        position: 15,
-    },
-    wingUpAngle: {
-        enabled: true,
-        position: 80,
-    },
-    keepWing: false,
-    needCatch: true,
-}
-
-let moveReset = {
-    time: 0.3333,
-    delay: 0,
-    posX: -7,
-    posY: 7,
-    rotZ: 15,
-    wingAngle: {
-        enabled: false,
-    },
-    wingUpAngle: {
-        enabled: false,
-    },
-    wingFrontAngle: {
-        enabled: false,
-        position: -40,
-    },
-    keepWing: false,
-}
 
 let currentAnim = null;
 
