@@ -1,3 +1,12 @@
+let bodyColor = [1, 0.85, 0.3, 1.0];
+let wingColor = [0, 0.5, 0.5, 1.0];
+let headColor = [0.98, 0.85, 0.85, 1.0];
+let beakColor = [0.25, 0.75, 0.75, 1.0];
+let bottomBeakColor = [0.75, 0.25, 0.25, 1.0]
+let featherColor = [0.7, 0.32, 1, 1.0]
+let secondaryFeatherColor = [1, 0.62, 0, 1.0]
+let primaryFeatherColor = [1, 0.45, 0.45, 1.0]
+
 class Vulture {
     constructor() {
         this.queuedAnims = [];
@@ -14,6 +23,9 @@ function applyColor(rgba) {
 
 function wingSmoothing(elapsed, o, from) {
     let a = Math.min(elapsed / g_catchupTime, 1);
+    if(!o.func) {
+        return lerpVal(from, o.position, a);
+    }
     if(o.func === "sine") {
         return lerpVal(from, getPhaseCorrectedSine(g_catchupTime, o), a);
     } else {
@@ -27,18 +39,20 @@ function updateVultureAnimation(vul) {
         g_animStartTime = g_currentTime;
         g_startPose = getCurrentPose();
         g_moving = true;
-        g_wingNeedCatchup = true && !g_keepWings;
+        g_wingNeedCatchup = !g_keepWings || currentAnim.needCatch;
 
         if(currentAnim.keepWing && g_keepWings === false) {
             g_keepWings = true;
             g_previousWingO = currentAnim.wingAngle;
             g_previousUpWingO = currentAnim.wingUpAngle;
+            g_previousFrontWingO = currentAnim.wingFrontAngle;
             g_previousDelay = currentAnim.delay;
             g_previousStartTime = g_animStartTime;
         } else if(currentAnim.keepWing === false && g_keepWings){
             g_keepWings = false;
             g_previousWingO = null;
             g_previousUpWingO = null;
+            g_previousFrontWingO = null;
             g_previousDelay = -1;
             g_previousStartTime = 0;
         }
@@ -61,6 +75,7 @@ function updateVultureAnimation(vul) {
         let elapsedFlap = g_currentTime - flapStartTime;
         elapsedFlap = Math.max(0, elapsedFlap); 
 
+        console.log(g_wingNeedCatchup);
         if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
             let g_previousO = currentAnim.wingAngle;
             if(g_previousO.func === 'sine') {
@@ -85,6 +100,20 @@ function updateVultureAnimation(vul) {
             g_wingFrontBackAngle = val;
         } else {
             currentAnim.wingUpAngle.position? g_wingFrontBackAngle = lerpVal(from.wingUpAngle.position, to.wingUpAngle.position, a): null;
+        }
+
+        if(currentAnim.wingFrontAngle.enabled && currentAnim.wingFrontAngle.enabled === true) {
+            let g_previousO = currentAnim.wingFrontAngle;
+            let val;
+            if(g_previousO.func === 'sine') {
+                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+            } else {
+                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+            }
+
+            g_leftRightWing = val;
+        } else {
+            currentAnim.wingFrontAngle.position? g_leftRightWing = lerpVal(from.wingFrontAngle.position, to.wingFrontAngle.position, a): null;
         }
 
         if(elapsed < currentAnim.delay) {
@@ -118,16 +147,15 @@ function updateVultureAnimation(vul) {
         currentAnim.leftToeAngle? g_leftToeAngle = lerpVal(from.leftToeAngle, to.leftToeAngle, a): null;
         currentAnim.rightToeAngle? g_rightToeAngle = lerpVal(from.rightToeAngle, to.rightToeAngle, a): null;
 
-        if(elapsed > g_catchupTime && g_wingNeedCatchup) {
+        if(elapsed >= g_catchupTime && g_wingNeedCatchup) {
             g_wingNeedCatchup = false;
-            from.wingAngle.position = g_leftWingAngle; 
         }
 
         if(a >= 1) {
             currentAnim = null;
         }
     } 
-    if ((g_keepWings && currentAnim === null) || (g_keepWings && currentAnim?.wingAngle.enabled === false && currentAnim?.wingUpAngle.enabled === false)) {
+    if ((g_keepWings && currentAnim === null) || (g_keepWings && currentAnim?.wingAngle.enabled === false && currentAnim?.wingUpAngle.enabled === false && currentAnim?.wingFrontAngle.enabled === false)) {
         let elapsed = g_currentTime - g_previousStartTime - g_previousDelay;
         if(g_previousWingO.func === 'sine') {
             g_leftWingAngle = getPhaseCorrectedSine(elapsed, g_previousWingO);
@@ -140,6 +168,12 @@ function updateVultureAnimation(vul) {
         } else {
             g_wingFrontBackAngle = getPhaseCorrectedCosine(elapsed, g_previousUpWingO);
         }
+
+        if(g_previousFrontWingO.func === 'sine') {
+            g_leftRightWing = getPhaseCorrectedSine(elapsed, g_previousFrontWingO);
+        } else {
+            g_leftRightWing = getPhaseCorrectedCosine(elapsed, g_previousFrontWingO);
+        }
     }
 }
 
@@ -147,6 +181,7 @@ let g_catchupTime = .35;
 let g_keepWings = false;
 let g_previousWingO = null;
 let g_previousUpWingO = null;
+let g_previousFrontWingO = null;
 let g_previousDelay = -1;
 let g_previousStartTime = -1;
 
@@ -187,6 +222,11 @@ let g_rightShinYAngle = 0;
 let g_rightFootAngle = 0;
 let g_rightToeAngle = 0;
 
+let g_leftRightWing = -40;
+let g_handXAngle = 0;
+let g_handYAngle = 0;
+let g_handZAngle = 0;
+
 function getCurrentPose() {
     return {
         posX: g_X,
@@ -216,6 +256,10 @@ function getCurrentPose() {
             position: g_wingFrontBackAngle,
         },
 
+        wingFrontAngle: {
+            position: g_leftRightWing,
+        },
+
         tailAngle: g_tailAngle,
 
         leftToeAngle: g_leftToeAngle,
@@ -226,15 +270,6 @@ function getCurrentPose() {
 let identity = new Matrix4();
 
 let g_tailAngle = 0;
-
-let bodyColor = [1, 0.85, 0.3, 1.0];
-let wingColor = [0, 0.5, 0.5, 1.0];
-let headColor = [0.98, 0.85, 0.85, 1.0];
-let beakColor = [0.25, 0.75, 0.75, 1.0];
-let bottomBeakColor = [0.75, 0.25, 0.25, 1.0]
-let featherColor = [0.7, 0.32, 1, 1.0]
-let secondaryFeatherColor = [1, 0.62, 0, 1.0]
-let primaryFeatherColor = [1, 0.45, 0.45, 1.0]
 
 let t = g_leftWingAngle / 80;
 
@@ -253,11 +288,16 @@ let startFlight = {
         enabled: false
     },
     wingUpAngle: {
-        position: -50,
+        position: -90,
+        enabled: false
+    },
+    wingFrontAngle: {
+        position: -40,
         enabled: false
     },
     tailAngle: 10,
-    keepWing: false
+    keepWing: false,
+    needCatch: false
 }
 
 let jumpOff = {
@@ -281,36 +321,24 @@ let jumpOff = {
     },
     wingUpAngle: {
         enabled: false,
-        position: 30,
+        position: 15,
         func: "cosine",
         a: 80,
         f: 5,
         s: 0,
         v: 40,
     },
-    keepWing: false,
-}
-
-let flap = {
-    time: 0.0,
-    delay: 0,
-    wingAngle: {
-        enabled: true,
+    wingFrontAngle: {
+        enabled: false,
+        position: -40,
         func: "sine",
-        a: 30,
+        a: 15,
         f: 5,
-        s: 0.3,
-        v: 20,
+        s: 0,
+        v: -45,
     },
-    wingUpAngle: {
-        enabled: true,
-        func: "cosine",
-        a: 50,
-        f: 5,
-        s: 0.3,
-        v: 0,
-    },
-    keepWing: true,
+    keepWing: false,
+    needCatch: true
 }
 
 let moveCrateQuarter = {
@@ -325,10 +353,29 @@ let moveCrateQuarter = {
     leftToeAngle: 15,
     rightToeAngle: 15,
     wingAngle: {
-        enabled: false,
+        enabled: true,
+        func: "sine",
+        a: 30,
+        f: 5,
+        s: 0.3,
+        v: 20,
     },
     wingUpAngle: {
-        enabled: false,
+        enabled: true,
+        func: "cosine",
+        a: 80,
+        f: 5,
+        s: 0.3,
+        v: 0,
+    },
+    wingFrontAngle: {
+        enabled: true,
+        position: -40,
+        func: "sine",
+        a: 15,
+        f: 5,
+        s: 0,
+        v: -45,
     },
     keepWing: true,
 }
@@ -349,10 +396,14 @@ let moveQuarter = {
     wingUpAngle: {
         enabled: false,
         func: "cosine",
-        a: 50,
+        a: 80,
         f: 5,
         s: 0.3,
         v: 0,
+    },
+    wingFrontAngle: {
+        enabled: false,
+        position: -40,
     },
     keepWing: true,
 }
@@ -363,7 +414,7 @@ let moveTilt = {
     posX: -10.5,
     posY: 7,
     rotZ: -15,
-    headY: 30,
+    headY: 25,
     rightLegX: -130,
     leftLegX: -130,
     rightShinX: -20,
@@ -381,10 +432,14 @@ let moveTilt = {
     wingUpAngle: {
         enabled: false,
         func: "cosine",
-        a: 50,
+        a: 80,
         f: 5,
         s: 0.3,
         v: 0,
+    },
+    wingFrontAngle: {
+        enabled: false,
+        position: -40,
     },
     keepWing: true,
 }
@@ -400,9 +455,10 @@ let moveLand = {
     },
     wingUpAngle: {
         enabled: true,
-        position: 30,
+        position: 80,
     },
     keepWing: false,
+    needCatch: true,
 }
 
 let moveReset = {
@@ -416,6 +472,10 @@ let moveReset = {
     },
     wingUpAngle: {
         enabled: false,
+    },
+    wingFrontAngle: {
+        enabled: false,
+        position: -40,
     },
     keepWing: false,
 }
@@ -440,11 +500,11 @@ function renderVulture(vul) {
     drawLeg(m, 0);
     drawLeg(m, 1);
 }
+let toe = new Matrix4();
 
 function drawToe(root, angle, length, legType, talon = false) {
     applyColor(bottomBeakColor);
 
-    let toe = new Matrix4();
     toe.set(root);
 
     let g_toeAngle = legType === 1? g_rightToeAngle : g_leftToeAngle;
@@ -463,9 +523,9 @@ function drawToe(root, angle, length, legType, talon = false) {
     drawAltCube(toe);
 }
 
+let shin = new Matrix4();
 function drawShin(root, legType) {
     applyColor(wingColor);
-    let shin = new Matrix4();
     shin.set(root);
 
     if(legType === 1) {
@@ -488,10 +548,9 @@ function drawShin(root, legType) {
     drawToe(shin, 180, 1.5, legType, true);
 }
 
+let thigh = new Matrix4();
 function drawLeg(root, legType) {
     applyColor(primaryFeatherColor);
-
-    let thigh = new Matrix4();
 
     if(legType === 1) {
         thigh.set(root);
@@ -518,7 +577,7 @@ function drawWing(root, mirror) {
         shoulder.scale(1, 1, -1); // reflect across Z
     }
 
-    shoulder.translate(-2.5, 0.85, 0.65).rotate(-40, 0, 0, 1).rotate(g_leftWingAngle, 0, 1, 0).rotate(lerpVal(g_wingFrontBackAngle, 0, t), 1, 0, 0);
+    shoulder.translate(-2.5, 0.85, 0.65).rotate(g_leftRightWing, 0, 0, 1).rotate(g_leftWingAngle, 0, 1, 0).rotate(lerpVal(g_wingFrontBackAngle, 0, t), 1, 0, 0);
     
     drawTopWing(shoulder);
 
@@ -526,32 +585,33 @@ function drawWing(root, mirror) {
     drawCube(shoulder);
 }
 
+let feather = new Matrix4();
 function drawFlightFeather(root, angle, angle2, length, width, angle3 = 0, height = 0.2, altColor = false) {
     if(altColor) {
         applyColor(wingColor);
     } else {
         applyColor(featherColor);
     }
-    let feather = new Matrix4();
     feather.set(root);
     feather.rotate(angle, 0, 1, 0).rotate(angle2, 0, 0, 1).rotate(angle3, 1, 0, 0).scale(length * 6, height, width);
     drawAltCube(feather);
 }
 
+
+let feather2 = new Matrix4();
 function drawSecondaryFeather(root, angle, angle2, length, width) {
     applyColor(secondaryFeatherColor);
-    let feather = new Matrix4();
-    feather.set(root);
-    feather.rotate(angle, 0, 1, 0).rotate(angle2, 0, 0, 1).scale(length * 4, 1.1, width);
-    drawAltCube(feather);
+    feather2.set(root);
+    feather2.rotate(angle, 0, 1, 0).rotate(angle2, 0, 0, 1).scale(length * 4, 1.1, width);
+    drawAltCube(feather2);
 }
 
+let feather3 = new Matrix4();
 function drawPrimaryFeather(root, angle, angle2, angle3, length, width, height = 0.75) {
     applyColor(primaryFeatherColor);
-    let feather = new Matrix4();
-    feather.set(root);
-    feather.rotate(angle3, 0, 0, 1).rotate(angle, 0, 1, 0).rotate(angle2, 1, 0, 0).scale(length * 2, height, width);
-    drawAltCube(feather);
+    feather3.set(root);
+    feather3.rotate(angle3, 0, 0, 1).rotate(angle, 0, 1, 0).rotate(angle2, 1, 0, 0).scale(length * 2, height, width);
+    drawAltCube(feather3);
 }
 
 // TODO: FIX FOREARM TOP PRIMARY FEATHERS CLIPPING?
@@ -560,8 +620,8 @@ function drawPrimaryFeather(root, angle, angle2, angle3, length, width, height =
 
 // TODO PERFORMANCE: INSTANTIATE ALL MATRICES AT TOP? to remove any need of new keyword
 
+let topWing = new Matrix4();
 function drawTopWing(root) {
-    let topWing = new Matrix4();
 
     // top primary feathers
     topWing.set(root);
@@ -608,9 +668,8 @@ function drawTopWing(root) {
     drawElbow(root);
 }
 
+let foreArm = new Matrix4();
 function drawForeArm(root) {
-    let foreArm = new Matrix4();
-
     // top primary feathers
     foreArm.set(root);
     foreArm.translate(-0.25, 1.05, 1);
@@ -668,8 +727,8 @@ function drawForeArm(root) {
     drawCube(foreArm);
 }
 
+let elbow = new Matrix4();
 function drawElbow(root) {
-    let elbow = new Matrix4();
     elbow.set(root).translate(0, 0, 1.25).rotate((-2.0567 * g_leftWingAngle -11.6667), 0, 1, 0).rotate((0.4167 * g_leftWingAngle - 3.333), 1, 0, 0).scale(0.185, 0.185, 0.26);
 
     drawForeArm(elbow);
@@ -678,8 +737,8 @@ function drawElbow(root) {
     drawWrist(elbow);
 }
 
+let hand = new Matrix4();
 function drawHand(root) {
-    let hand = new Matrix4();
     hand.set(root);
 
     // draw primary flight feathers
@@ -745,24 +804,23 @@ function drawHand(root) {
     hand.translate(0, 0, 0.1);
     drawPrimaryFeather(hand, lerpVal(-15, -70, t), 0, 0, 6, 2);
 
-    hand.set(root).translate(-1, 0, 6.5);
+    hand.set(root).translate(-1, 0, 6.5)
     hand.scale(2, 2, 12)
     applyColor(wingColor);
     drawAltCube(hand);
 }
 
+let wrist = new Matrix4();
 function drawWrist(root) {
-    let wrist = new Matrix4();
     wrist.set(root).translate(0, 0, 3).rotate((2 * g_leftWingAngle + 30), 0, 1, 0).rotate((0.4167 * g_leftWingAngle - 3.333), 1, 0, 0).rotate(0.85 * g_leftWingAngle, 0, 0, 1).scale(0.185, 0.185, 0.26);
-    
+
     drawHand(wrist);
     drawCube(wrist);
 }
 
+let body = new Matrix4();
 function drawBody(root) {
     applyColor(bodyColor);
-
-    let body = new Matrix4();
 
     // chest
     body.set(root)
@@ -799,11 +857,6 @@ function drawBody(root) {
     body.translate(-3.3, 1.798, 0).rotate(18.4, 0, 0, 1).scale(0.417, 1.594, 0.417);
     drawCube(body);
 
-    // brown back body
-    // body.set(root);
-    // body.translate(-2.575, 0.381, 0).rotate(30, 0, 0, 1).scale(0.673, 1.594, 0.417);
-    // drawCube(body);
-
     // tailbone
     body.set(root);
     body.translate(-0.225, -1.642, 0).rotate(75.9, 0, 0, 1).scale(0.545, 0.887, 0.417);
@@ -839,27 +892,25 @@ function drawBody(root) {
     drawFlightFeather(body, lerpVal(-5, g_tailAngle * 15, t2), lerpVal(-20, -60, t2), 0.4, 0.5, 0, 0.1, true);
 }
 
+let head = new Matrix4();
 function drawHead(root) {
-    let body = new Matrix4();
-    body.set(root)
-    body.translate(-3.256, 3.07, 0).rotate(g_headY, 0, 0, 1).rotate(g_headX, 0, 1, 0)
-    body.scale(-1, 1, 1);
-    body.translate(-0.75, 0, 0);
-    drawTopBeak(body);
-    drawBottomBeak(body);
-    body.translate(0.75, 0, 0);
+    head.set(root)
+    head.translate(-3.256, 3.07, 0).rotate(g_headY, 0, 0, 1).rotate(g_headX, 0, 1, 0)
+    head.scale(-1, 1, 1);
+    head.translate(-0.75, 0, 0);
+    drawTopBeak(head);
+    drawBottomBeak(head);
+    head.translate(0.75, 0, 0);
 
     applyColor(headColor);
-    //body.scale(0.860, 0.507, 0.381);
-    body.scale(-1, 1, 1);
-    body.scale(0.860 * 2, 0.507 * 2, 0.35 * 2);
-    drawAltCube(body);
+    head.scale(-1, 1, 1);
+    head.scale(0.860 * 2, 0.507 * 2, 0.35 * 2);
+    drawAltCube(head);
 }
 
+let beak = new Matrix4();
 function drawTopBeak(root) {
     applyColor(beakColor);
-
-    let beak = new Matrix4();
 
     // draw main top beak
     beak.set(root);
@@ -871,21 +922,19 @@ function drawTopBeak(root) {
     drawCube(beak);
 }
 
+let beak2 = new Matrix4();
 function drawBottomBeak(root) {
     applyColor(bottomBeakColor);
 
-    let beak = new Matrix4();
-
-    beak.set(root);
-    beak.translate(-.5, 0, 0).rotate(g_bottomBeakAngle, 0, 0, 1).translate(-.51, -0.18, 0);
-    drawBottomBeakParts(beak);
-    beak.scale(0.525, 0.076, 0.107);
-    drawCube(beak);
+    beak2.set(root);
+    beak2.translate(-.5, 0, 0).rotate(g_bottomBeakAngle, 0, 0, 1).translate(-.51, -0.18, 0);
+    drawBottomBeakParts(beak2);
+    beak2.scale(0.525, 0.076, 0.107);
+    drawCube(beak2);
 }
 
+let parts = new Matrix4();
 function drawBottomBeakParts(root) {
-    let parts = new Matrix4();
-
     // bottom beak pike
     parts.set(root);
     parts.translate(-0.501, 0.063, 0).rotate(-42.1, 0, 0, 1).scale(0.068, 0.029, 0.044);
@@ -897,23 +946,22 @@ function drawBottomBeakParts(root) {
     drawCube(parts);
 }
 
+let parts2 = new Matrix4();
 function drawTopBeakParts(root) {
-    let parts = new Matrix4();
-    
     // front top beak
-    parts.set(root);
-    parts.translate(-0.547, -0.134, 0).rotate(-29.8, 0, 0, 1).scale(0.112, 0.195, 0.146);
-    drawCube(parts);
+    parts2.set(root);
+    parts2.translate(-0.547, -0.134, 0).rotate(-29.8, 0, 0, 1).scale(0.112, 0.195, 0.146);
+    drawCube(parts2);
 
     // peak pike
-    parts.set(root);
-    parts.translate(-0.652, -0.332, 0).rotate(-3.24, 0, 0, 1).scale(0.052, 0.091, 0.063);
-    drawCube(parts);
+    parts2.set(root);
+    parts2.translate(-0.652, -0.332, 0).rotate(-3.24, 0, 0, 1).scale(0.052, 0.091, 0.063);
+    drawCube(parts2);
 
     // top of top beak
-    parts.set(root);
-    parts.translate(-0.05, 0.1, 0).rotate(15.4, 0, 0, 1).scale(0.366, 0.156, 0.084);
-    drawCube(parts);
+    parts2.set(root);
+    parts2.translate(-0.05, 0.1, 0).rotate(15.4, 0, 0, 1).scale(0.366, 0.156, 0.084);
+    drawCube(parts2);
 }
 
 // helper functions

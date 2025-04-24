@@ -6,6 +6,7 @@ class Area {
     }
   
     render() {
+        applyColor(headColor);
         this.newM.set(this.matrix);
         this.newM.translate(0, -3, 0);
         drawCube(this.newM);
