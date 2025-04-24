@@ -34,7 +34,7 @@ let a_Normal;
 let u_FragColor;
 let u_ModelMatrix;
 let u_GlobalRotateMatrix;
-let angleX = 55;
+let angleX = -180;
 let angleY = 0;
 let g_lastX = 0;
 let g_lastY = 0;
@@ -110,8 +110,6 @@ function addActionsForHtmlUI() {
   document.getElementById('bottomBeakSlider').addEventListener('mousemove', function() { g_bottomBeakAngle = this.value; renderAllShapes(); });
   document.getElementById('wingSlider').addEventListener('mousemove', function() { g_leftWingAngle = this.value; renderAllShapes(); });
   document.getElementById('handXSlider').addEventListener('mousemove', function() { g_leftRightWing = this.value; renderAllShapes(); });
-  // document.getElementById('handYSlider').addEventListener('mousemove', function() { g_handYAngle = this.value; renderAllShapes(); });
-  // document.getElementById('handZSlider').addEventListener('mousemove', function() { g_handZAngle = this.value; renderAllShapes(); });
   document.getElementById('wingFrontBackSlider').addEventListener('mousemove', function() { g_wingFrontBackAngle = this.value; renderAllShapes(); });
   document.getElementById('tailSlider').addEventListener('mousemove', function() { g_tailAngle = this.value; renderAllShapes(); });
 
@@ -244,6 +242,13 @@ function main() {
   g_ViewProjection.setPerspective(75, canvas.width/canvas.height, 0.1, 1000);
   g_vulture = new Vulture();
   g_area = new Area();
+
+  // g_vulture.queuedAnims.push(reset);
+  // g_vulture.queuedAnims.push(landTurn);
+  // g_vulture.queuedAnims.push(threeFourthsBuffer);
+  // g_vulture.queuedAnims.push(oneFourthsBuffer);
+  // g_vulture.queuedAnims.push(flyUpTurn);
+  // g_vulture.queuedAnims.push(startTurn);
 
   renderAllShapes();
 

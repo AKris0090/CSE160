@@ -10,5 +10,8 @@ class Area {
         this.newM.set(this.matrix);
         this.newM.translate(0, -3, 0);
         drawCube(this.newM);
+        this.newM.set(this.matrix);
+        this.newM.translate(-7.25, 0, -7.25).scale(1, 3, 1);
+        drawCube(this.newM);
     }
 }

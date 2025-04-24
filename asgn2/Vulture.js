@@ -127,13 +127,23 @@ function updateVultureAnimation(vul) {
         currentAnim.rotY? g_angleY = lerpVal(from.rotY, to.rotY, a): null;
         currentAnim.rotZ? g_angleZ = lerpVal(from.rotZ, to.rotZ, a): null;
 
+        currentAnim.rotX? g_angleX = from.rotX + lerpVal(0, to.rotX, a): null;
+        currentAnim.rotY? g_angleY = from.rotY + lerpVal(0, to.rotY, a): null;
+        currentAnim.rotZ? g_angleZ = from.rotZ + lerpVal(0, to.rotZ, a): null;
+
         currentAnim.headY? g_headY = lerpVal(from.headY, to.headY, a): null;
 
         currentAnim.rightLegX? g_rightLegXAngle = lerpVal(from.rightLegX, to.rightLegX, a): null;
         currentAnim.leftLegX? g_leftLegXAngle = lerpVal(from.leftLegX, to.leftLegX, a): null;
 
+        currentAnim.rightLegY? g_rightLegYAngle = lerpVal(from.rightLegY, to.rightLegY, a): null;
+        currentAnim.leftLegY? g_leftLegYAngle = lerpVal(from.leftLegY, to.leftLegY, a): null;
+
         currentAnim.rightShinX? g_rightShinXAngle = lerpVal(from.rightShinX, to.rightShinX, a): null;
         currentAnim.leftShinX? g_leftShinXAngle = lerpVal(from.leftShinX, to.leftShinX, a): null;
+
+        currentAnim.rightShinY? g_rightShinYAngle = lerpVal(from.rightShinY, to.rightShinY, a): null;
+        currentAnim.leftShinY? g_leftShinYAngle = lerpVal(from.leftShinY, to.leftShinY, a): null;
 
         currentAnim.rightFoot? g_rightFootAngle = lerpVal(from.rightFoot, to.rightFoot, a): null;
         currentAnim.leftFoot? g_leftFootAngle = lerpVal(from.leftFoot, to.leftFoot, a): null;
@@ -142,6 +152,7 @@ function updateVultureAnimation(vul) {
 
         currentAnim.posX? g_X = from.posX + lerpVal(0, to.posX, a): null;
         currentAnim.posY? g_Y = from.posY + lerpVal(0, to.posY, a): null;
+        currentAnim.posZ? g_Z = from.posZ + lerpVal(0, to.posZ, a): null;
 
         currentAnim.leftToeAngle? g_leftToeAngle = lerpVal(from.leftToeAngle, to.leftToeAngle, a): null;
         currentAnim.rightToeAngle? g_rightToeAngle = lerpVal(from.rightToeAngle, to.rightToeAngle, a): null;
@@ -241,8 +252,14 @@ function getCurrentPose() {
         rightLegX: g_rightLegXAngle,
         leftLegX: g_leftLegXAngle,
 
+        rightLegY: g_rightLegYAngle,
+        leftLegY: g_leftLegYAngle,
+
         rightShinX: g_rightShinXAngle,
         leftShinX: g_leftShinXAngle,
+
+        rightShinY: g_rightShinYAngle,
+        leftShinY: g_leftShinYAngle,
 
         rightFoot: g_rightFootAngle,
         leftFoot: g_leftFootAngle,
@@ -321,12 +338,12 @@ function drawShin(root, legType) {
     shin.set(root);
 
     if(legType === 1) {
-        shin.translate(1.85, -0.25, 0).rotate(g_leftShinXAngle, 0, 0, 1).rotate(g_leftShinYAngle, 0, 1, 0);
+        shin.translate(1.85, -0.25, 0).rotate(g_leftShinXAngle, 0, 0, 1).rotate(g_leftShinYAngle, 1, 0, 0);
         shin.scale(1.05, 0.25, 0.25);
         drawAltCube(shin);
         shin.scale(1/1.05, 4, 4);
     } else {
-        shin.translate(1.85, -0.25, 0).rotate(g_rightShinXAngle, 0, 0, 1).rotate(g_rightShinYAngle, 0, 1, 0);
+        shin.translate(1.85, -0.25, 0).rotate(g_rightShinXAngle, 0, 0, 1).rotate(g_rightShinYAngle, 1, 0, 0);
         shin.scale(1.05, 0.25, 0.25);
         drawAltCube(shin);
         shin.scale(1/1.05, 4, 4);
