@@ -28,7 +28,7 @@ let startFlight = {
 let jumpOff = {
     time: 0.28,
     delay: 0.2,
-    posX: -1.5,
+    posX: 1,
     posY: 3,
     rotZ: 20,
     rightLegX: -80,
@@ -69,8 +69,8 @@ let jumpOff = {
 let moveCrateQuarter = {
     time: 0.22,
     delay: 0,
-    posX: -3.5,
-    posY: 7,
+    posX: -2,
+    posY: 4,
     rightLegX: -45,
     leftLegX: -45,
     rightShinX: 20,
@@ -108,8 +108,8 @@ let moveCrateQuarter = {
 let moveQuarter = {
     time: 0.3333,
     delay: 0,
-    posX: -7,
-    posY: 11,
+    posX: -3.5,
+    posY: 4,
     wingAngle: {
         enabled: false,
         func: "sine",
@@ -141,8 +141,8 @@ let moveQuarter = {
 let moveTilt = {
     time: 0.4,
     delay: 0,
-    posX: -12,
-    posY: 10.5,
+    posX: -5,
+    posY: -0.5,
     rotZ: -15,
     headY: 25,
     rightLegX: -130,
@@ -177,8 +177,8 @@ let moveTilt = {
 let moveBuffer = {
     time: 0.3333,
     delay: 0,
-    posX: -14,
-    posY: 9,
+    posX: -2,
+    posY: -1.5,
     wingAngle: {
         enabled: false,
         position: 25,
@@ -198,7 +198,7 @@ let moveBuffer = {
 let moveLand = {
     time: 0.3333,
     delay: 0,
-    posX: -16,
+    posX: -2,
     headY: 19.2,
     rightLegX: -90,
     leftLegX: -90,
@@ -237,7 +237,7 @@ let moveLand = {
 let moveSetLeg = {
     time: .05,
     delay: 0,
-    posX: -16.5,
+    posX: -.5,
     rightLegX: -80,
     leftLegX: -80,
     wingAngle: {
@@ -271,7 +271,6 @@ let moveSetLeg = {
 let moveFlapping = {
     time: 1,
     delay: 0,
-    posX: -16.5,
     rightLegX: -80,
     leftLegX: -80,
     wingAngle: {

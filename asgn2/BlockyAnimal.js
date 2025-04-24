@@ -38,7 +38,7 @@ let angleX = 55;
 let angleY = 0;
 let g_lastX = 0;
 let g_lastY = 0;
-let g_Zoom = 40;
+let g_Zoom = 15;
 
 let g_ViewProjection = new Matrix4();
 let g_globalRotateMatrix;
@@ -208,14 +208,16 @@ function main() {
     g_lastY = ev.y;
 
     if(ev.buttons == 1 && g_moving === false) {
-      // g_vulture.queuedAnims.push(moveReset);
-      // g_vulture.queuedAnims.push(moveLand);
-      // g_vulture.queuedAnims.push(moveTilt);
-      // g_vulture.queuedAnims.push(moveQuarter);
-      // g_vulture.queuedAnims.push(moveCrateQuarter);
-      // g_vulture.queuedAnims.push(jumpOff);
-      // g_vulture.queuedAnims.push(startFlight);
-      console.log(g_handXAngle, g_handYAngle, g_handZAngle);
+      g_vulture.queuedAnims.push(moveReset);
+      g_vulture.queuedAnims.push(moveFlapping);
+      g_vulture.queuedAnims.push(moveSetLeg);
+      g_vulture.queuedAnims.push(moveLand);
+      g_vulture.queuedAnims.push(moveBuffer);
+      g_vulture.queuedAnims.push(moveTilt);
+      g_vulture.queuedAnims.push(moveQuarter);
+      g_vulture.queuedAnims.push(moveCrateQuarter);
+      g_vulture.queuedAnims.push(jumpOff);
+      g_vulture.queuedAnims.push(startFlight);
     }
   })
 
@@ -242,17 +244,6 @@ function main() {
   g_ViewProjection.setPerspective(75, canvas.width/canvas.height, 0.1, 1000);
   g_vulture = new Vulture();
   g_area = new Area();
-
-  g_vulture.queuedAnims.push(moveReset);
-  g_vulture.queuedAnims.push(moveFlapping);
-  g_vulture.queuedAnims.push(moveSetLeg);
-  g_vulture.queuedAnims.push(moveLand);
-  g_vulture.queuedAnims.push(moveBuffer);
-  g_vulture.queuedAnims.push(moveTilt);
-  g_vulture.queuedAnims.push(moveQuarter);
-  g_vulture.queuedAnims.push(moveCrateQuarter);
-  g_vulture.queuedAnims.push(jumpOff);
-  g_vulture.queuedAnims.push(startFlight);
 
   renderAllShapes();
 

@@ -140,8 +140,8 @@ function updateVultureAnimation(vul) {
 
         currentAnim.tailAngle? g_tailAngle = lerpVal(from.tailAngle, to.tailAngle, a): null;
 
-        currentAnim.posX? g_X = lerpVal(from.posX, to.posX, a): null;
-        currentAnim.posY? g_Y = lerpVal(from.posY, to.posY, a): null;
+        currentAnim.posX? g_X = from.posX + lerpVal(0, to.posX, a): null;
+        currentAnim.posY? g_Y = from.posY + lerpVal(0, to.posY, a): null;
 
         currentAnim.leftToeAngle? g_leftToeAngle = lerpVal(from.leftToeAngle, to.leftToeAngle, a): null;
         currentAnim.rightToeAngle? g_rightToeAngle = lerpVal(from.rightToeAngle, to.rightToeAngle, a): null;
