@@ -206,6 +206,13 @@ function main() {
     g_lastY = ev.y;
 
     if(ev.buttons == 1 && g_moving === false) {
+      // g_vulture.queuedAnims.push(reset);
+      // g_vulture.queuedAnims.push(landTurn);
+      // g_vulture.queuedAnims.push(threeFourthsBuffer);
+      // g_vulture.queuedAnims.push(oneFourthsBuffer);
+      // g_vulture.queuedAnims.push(flyUpTurn);
+      // g_vulture.queuedAnims.push(startTurn);
+
       g_vulture.queuedAnims.push(moveReset);
       g_vulture.queuedAnims.push(moveFlapping);
       g_vulture.queuedAnims.push(moveSetLeg);

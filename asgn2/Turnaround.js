@@ -1,106 +1,3 @@
-// let leftUp = {
-//     time: 0.3333,
-//     delay: 0,
-//     rotY: -15,
-//     rightLegX: -130,
-//     rightShinX: 30,
-//     rightShinY: 50,
-//     leftLegY: -5,
-//     wingAngle: {
-//         enabled: false,
-//     },
-//     wingUpAngle: {
-//         enabled: false,
-//     },
-//     wingFrontAngle: {
-//         enabled: false,
-//     },
-//     keepWing: false,
-//     needCatch: true,
-// }
-
-// let leftDown = {
-//     time: 0.3333,
-//     delay: 0,
-//     rotY: -15,
-//     rotZ: 10,
-//     rightLegX: -125,
-//     rightLegY: 5,
-//     rightShinX: 10,
-//     rightShinY: 80,
-//     leftLegX: -60,
-//     leftShinX: -50,
-//     leftFoot: 10,
-//     leftLegY: -5,
-//     wingAngle: {
-//         enabled: false,
-//     },
-//     wingUpAngle: {
-//         enabled: false,
-//     },
-//     wingFrontAngle: {
-//         enabled: false,
-//     },
-//     keepWing: false,
-//     needCatch: true,
-// }
-
-// let rightUp = {
-//     time: 0.3333,
-//     delay: 0,
-//     posZ: 1.75,
-//     posX: -2,
-//     rotY: -45,
-//     rightLegX: -125,
-//     rightLegY: 5,
-//     rightShinX: 10,
-//     rightShinY: -20,
-//     leftLegX: -30,
-//     leftShinX: -90,
-//     leftShinY: 30,
-//     leftFoot: 10,
-//     leftLegY: -5,
-//     wingAngle: {
-//         enabled: false,
-//     },
-//     wingUpAngle: {
-//         enabled: false,
-//     },
-//     wingFrontAngle: {
-//         enabled: false,
-//     },
-//     keepWing: false,
-//     needCatch: true,
-// }
-
-// let rightDown = {
-//     time: 0.3333,
-//     delay: 0,
-//     posZ: 1.75,
-//     posZ: -0.3,
-//     rotY: -45,
-//     rightLegX: -125,
-//     rightLegY: 5,
-//     rightShinX: 10,
-//     rightShinY: -20,
-//     leftLegX: -30,
-//     leftShinX: -90,
-//     leftShinY: 30,
-//     leftFoot: 10,
-//     leftLegY: -5,
-//     wingAngle: {
-//         enabled: false,
-//     },
-//     wingUpAngle: {
-//         enabled: false,
-//     },
-//     wingFrontAngle: {
-//         enabled: false,
-//     },
-//     keepWing: false,
-//     needCatch: true,
-// }
-
 let startTurn = {
     time: 0.65,
     delay: 0,
@@ -254,8 +151,10 @@ let reset = {
     headY: 0,
     rightLegX: -90,
     leftLegX: -90,
-    rightShinX: -30,
-    leftShinX: -30,
+    rightShinX: 0.01,
+    leftShinX: 0.01,
+    leftFoot: 0.01,
+    rightFoot: 0.01,
     tailAngle: 0,
     wingAngle: {
         position: 70,

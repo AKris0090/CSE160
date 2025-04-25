@@ -177,7 +177,7 @@ let moveTilt = {
 let moveBuffer = {
     time: 0.3333,
     delay: 0,
-    posX: -2,
+    posX: -2.5,
     posY: -1.5,
     wingAngle: {
         enabled: false,
@@ -199,6 +199,8 @@ let moveLand = {
     time: 0.3333,
     delay: 0,
     posX: -2,
+    posY: 0.8,
+    rotZ: 15.5,
     headY: 19.2,
     rightLegX: -90,
     leftLegX: -90,
@@ -238,8 +240,10 @@ let moveSetLeg = {
     time: .05,
     delay: 0,
     posX: -.5,
-    rightLegX: -80,
-    leftLegX: -80,
+    rightLegX: -90,
+    leftLegX: -90,
+    leftShinX: 0.01,
+    rightShinX: 0.01,
     wingAngle: {
         enabled: false,
         func: "sine",
@@ -271,8 +275,6 @@ let moveSetLeg = {
 let moveFlapping = {
     time: 1,
     delay: 0,
-    rightLegX: -80,
-    leftLegX: -80,
     wingAngle: {
         enabled: false,
         func: "sine",

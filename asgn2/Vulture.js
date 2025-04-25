@@ -123,10 +123,6 @@ function updateVultureAnimation(vul) {
         a = elapsed / duration;
 
         // apply all animation transformations
-        currentAnim.rotX? g_angleX = lerpVal(from.rotX, to.rotX, a): null;
-        currentAnim.rotY? g_angleY = lerpVal(from.rotY, to.rotY, a): null;
-        currentAnim.rotZ? g_angleZ = lerpVal(from.rotZ, to.rotZ, a): null;
-
         currentAnim.rotX? g_angleX = from.rotX + lerpVal(0, to.rotX, a): null;
         currentAnim.rotY? g_angleY = from.rotY + lerpVal(0, to.rotY, a): null;
         currentAnim.rotZ? g_angleZ = from.rotZ + lerpVal(0, to.rotZ, a): null;
@@ -185,6 +181,8 @@ function updateVultureAnimation(vul) {
             g_leftRightWing = getPhaseCorrectedCosine(elapsed, g_previousFrontWingO);
         }
     }
+
+    console.log(g_rightLegXAngle);
 }
 
 let g_catchupTime = .25;
@@ -199,6 +197,7 @@ let g_wingNeedCatchup = false;
 let g_moving = false;
 let g_startPose = null;
 let g_animStartTime = -1;
+
 let g_topBeakAngle = 14;
 let g_bottomBeakAngle = 10;
 
