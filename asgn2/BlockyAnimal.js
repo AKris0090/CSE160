@@ -164,35 +164,88 @@ function createCubeNormals() {
   return out;
 }
 
+let g_icoVerts = [];
+
+function addVertsFromIndices(tIndices) {
+  for(let j = 0; j < 3; j++) {
+    for(let k = 0; k < 3; k++) {
+      cubeArray.push(g_icoVerts[tIndices[j]][k]);
+    }
+  }
+}
+
+// http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+function addIcoSphereVertices() {
+  var t = (1.0 + Math.sqrt(5.0)) / 2.0;
+
+  g_icoVerts.push([-1,  t,  0]);
+  g_icoVerts.push([ 1,  t,  0]);
+  g_icoVerts.push([-1, -t,  0]);
+  g_icoVerts.push([ 1, -t,  0]);
+  g_icoVerts.push([ 0, -1,  t]);
+  g_icoVerts.push([ 0,  1,  t]);
+  g_icoVerts.push([ 0, -1, -t]);
+  g_icoVerts.push([ 0,  1, -t]);
+  g_icoVerts.push([ t,  0, -1]);
+  g_icoVerts.push([ t,  0,  1]);
+  g_icoVerts.push([-t,  0, -1]);
+  g_icoVerts.push([-t,  0,  1]);
+
+  addVertsFromIndices([0, 11, 5]);
+  addVertsFromIndices([0, 5, 1]);
+  addVertsFromIndices([0, 1, 7]);
+  addVertsFromIndices([0, 7, 10]);
+  addVertsFromIndices([0, 10, 11]);
+  addVertsFromIndices([1, 5, 9]);
+  addVertsFromIndices([5, 11, 4]);
+  addVertsFromIndices([11, 10, 2]);
+  addVertsFromIndices([10, 7, 6]);
+  addVertsFromIndices([7, 1, 8]);
+  addVertsFromIndices([3, 9, 4]);
+  addVertsFromIndices([3, 4, 2]);
+  addVertsFromIndices([3, 2, 6]);
+  addVertsFromIndices([3, 6, 8]);
+  addVertsFromIndices([3, 8, 9]);
+  addVertsFromIndices([4, 9, 5]);
+  addVertsFromIndices([2, 4, 11]);
+  addVertsFromIndices([6, 2, 10]);
+  addVertsFromIndices([8, 6, 7]);
+  addVertsFromIndices([9, 8, 1]); // 180 vertices total
+}
+
 function createAttachCubeVertexBuffer() {
-    // Create a buffer object
-    var vertexBuffer = gl.createBuffer();
-    if (!vertexBuffer) {
-      console.log('Failed to create the buffer object');
-      return -1;
-    }
+  //addIcoSphereVertices();
 
-    var normalBuffer = gl.createBuffer();
-    if(!normalBuffer) {
-      console.log("Failed to create the normal buffer object");
-      return -1;
-    }
+  cubeVertices = new Float32Array(cubeArray);
   
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertices), gl.DYNAMIC_DRAW);
-    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+  // Create a buffer object
+  var vertexBuffer = gl.createBuffer();
+  if (!vertexBuffer) {
+    console.log('Failed to create the buffer object');
+    return -1;
+  }
 
-    // Enable the assignment to a_Position variable
-    gl.enableVertexAttribArray(a_Position);
+  var normalBuffer = gl.createBuffer();
+  if(!normalBuffer) {
+    console.log("Failed to create the normal buffer object");
+    return -1;
+  }
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertices), gl.DYNAMIC_DRAW);
+  gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
 
-    let normalsArray = createCubeNormals();
+  // Enable the assignment to a_Position variable
+  gl.enableVertexAttribArray(a_Position);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalsArray), gl.DYNAMIC_DRAW);
-    gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
+  let normalsArray = createCubeNormals();
 
-    // Enable assignment to a_Normal variable;
-    gl.enableVertexAttribArray(a_Normal);
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalsArray), gl.DYNAMIC_DRAW);
+  gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
+
+  // Enable assignment to a_Normal variable;
+  gl.enableVertexAttribArray(a_Normal);
 }
 
 function main() {
@@ -206,40 +259,40 @@ function main() {
     g_lastY = ev.y;
 
     if(ev.buttons == 1 && g_moving === false) {
-      g_vulture.queuedAnims.push(reset2);
-      g_vulture.queuedAnims.push(landTurn2);
-      g_vulture.queuedAnims.push(threeFourthsBuffer2);
-      g_vulture.queuedAnims.push(oneFourthsBuffer2);
-      g_vulture.queuedAnims.push(flyUpTurn2);
-      g_vulture.queuedAnims.push(startTurn2);
+      // g_vulture.queuedAnims.push(reset2);
+      // g_vulture.queuedAnims.push(landTurn2);
+      // g_vulture.queuedAnims.push(threeFourthsBuffer2);
+      // g_vulture.queuedAnims.push(oneFourthsBuffer2);
+      // g_vulture.queuedAnims.push(flyUpTurn2);
+      // g_vulture.queuedAnims.push(startTurn2);
 
-      g_vulture.queuedAnims.push(moveReset);
-      g_vulture.queuedAnims.push(backResetBody);
-      g_vulture.queuedAnims.push(backImpact);
-      g_vulture.queuedAnims.push(backLand);
-      g_vulture.queuedAnims.push(backBuffer1);
-      g_vulture.queuedAnims.push(backFlapping);
-      g_vulture.queuedAnims.push(backRotate);
-      g_vulture.queuedAnims.push(jumpReturn);
-      g_vulture.queuedAnims.push(startReturn);
+      // g_vulture.queuedAnims.push(moveReset);
+      // g_vulture.queuedAnims.push(backResetBody);
+      // g_vulture.queuedAnims.push(backImpact);
+      // g_vulture.queuedAnims.push(backLand);
+      // g_vulture.queuedAnims.push(backBuffer1);
+      // g_vulture.queuedAnims.push(backFlapping);
+      // g_vulture.queuedAnims.push(backRotate);
+      // g_vulture.queuedAnims.push(jumpReturn);
+      // g_vulture.queuedAnims.push(startReturn);
 
-      g_vulture.queuedAnims.push(reset);
-      g_vulture.queuedAnims.push(landTurn);
-      g_vulture.queuedAnims.push(threeFourthsBuffer);
-      g_vulture.queuedAnims.push(oneFourthsBuffer);
-      g_vulture.queuedAnims.push(flyUpTurn);
-      g_vulture.queuedAnims.push(startTurn);
+      // g_vulture.queuedAnims.push(reset);
+      // g_vulture.queuedAnims.push(landTurn);
+      // g_vulture.queuedAnims.push(threeFourthsBuffer);
+      // g_vulture.queuedAnims.push(oneFourthsBuffer);
+      // g_vulture.queuedAnims.push(flyUpTurn);
+      // g_vulture.queuedAnims.push(startTurn);
 
-      g_vulture.queuedAnims.push(moveReset);
-      g_vulture.queuedAnims.push(moveFlapping);
-      g_vulture.queuedAnims.push(moveSetLeg);
-      g_vulture.queuedAnims.push(moveLand);
-      g_vulture.queuedAnims.push(moveBuffer);
-      g_vulture.queuedAnims.push(moveTilt);
-      g_vulture.queuedAnims.push(moveQuarter);
-      g_vulture.queuedAnims.push(moveCrateQuarter);
-      g_vulture.queuedAnims.push(jumpOff);
-      g_vulture.queuedAnims.push(startFlight);
+      // g_vulture.queuedAnims.push(moveReset);
+      // g_vulture.queuedAnims.push(moveFlapping);
+      // g_vulture.queuedAnims.push(moveSetLeg);
+      // g_vulture.queuedAnims.push(moveLand);
+      // g_vulture.queuedAnims.push(moveBuffer);
+      // g_vulture.queuedAnims.push(moveTilt);
+      // g_vulture.queuedAnims.push(moveQuarter);
+      // g_vulture.queuedAnims.push(moveCrateQuarter);
+      // g_vulture.queuedAnims.push(jumpOff);
+      // g_vulture.queuedAnims.push(startFlight);
     }
   })
 

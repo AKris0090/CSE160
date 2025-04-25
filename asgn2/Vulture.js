@@ -122,8 +122,6 @@ function updateVultureAnimation(vul) {
 
             elapsed -= currentAnim.delay;
             a = Math.min(1, elapsed / (duration - currentAnim.delay));
-
-            //console.log(a);
             
             // apply all animation transformations
             currentAnim.posX? g_X = from.posX + lerpVal(0, to.posX, a): null;
@@ -185,8 +183,6 @@ function updateVultureAnimation(vul) {
             g_leftRightWing = getPhaseCorrectedCosine(elapsed, g_previousFrontWingO);
         }
     }
-
-    console.log(g_Y);
 }
 
 let g_catchupTime = .25;
