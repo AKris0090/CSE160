@@ -58,109 +58,113 @@ function updateVultureAnimation(vul) {
         }
     }
 
-    if(currentAnim) {
-        let elapsed = g_currentTime - g_animStartTime;
+    block: {
+        if(currentAnim) {
+            let elapsed = g_currentTime - g_animStartTime;
 
-        while(currentAnim.fullDelay && elapsed < currentAnim.fullDelay) {
-            return;
-        }
-
-        let duration = currentAnim.time;
-        let a = elapsed / duration;
-
-        let from = g_startPose;
-        let to = currentAnim;
-
-        let flapStartTime = g_animStartTime + currentAnim.delay;
-        let elapsedFlap = g_currentTime - flapStartTime;
-        elapsedFlap = Math.max(0, elapsedFlap); 
-
-        if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
-            let g_previousO = currentAnim.wingAngle;
-            if(g_previousO.func === 'sine') {
-                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
-            } else {
-                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
-            }
-            g_leftWingAngle = val;
-        } else {
-            currentAnim.wingAngle.position? g_leftWingAngle = lerpVal(from.wingAngle.position, to.wingAngle.position, a): null;
-        }
-
-        if(currentAnim.wingUpAngle.enabled && currentAnim.wingUpAngle.enabled === true) {
-            let g_previousO = currentAnim.wingUpAngle;
-            let val;
-            if(g_previousO.func === 'sine') {
-                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
-            } else {
-                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+            while(currentAnim.fullDelay && elapsed < currentAnim.fullDelay) {
+                break block;
             }
 
-            g_wingFrontBackAngle = val;
-        } else {
-            currentAnim.wingUpAngle.position? g_wingFrontBackAngle = lerpVal(from.wingUpAngle.position, to.wingUpAngle.position, a): null;
-        }
+            let duration = currentAnim.time;
+            let a = Math.min(1, elapsed / duration);
 
-        if(currentAnim.wingFrontAngle.enabled && currentAnim.wingFrontAngle.enabled === true) {
-            let g_previousO = currentAnim.wingFrontAngle;
-            let val;
-            if(g_previousO.func === 'sine') {
-                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+            let from = g_startPose;
+            let to = currentAnim;
+
+            let flapStartTime = g_animStartTime + currentAnim.delay;
+            let elapsedFlap = g_currentTime - flapStartTime;
+            elapsedFlap = Math.max(0, Math.min(1, elapsedFlap)); 
+
+            if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
+                let g_previousO = currentAnim.wingAngle;
+                if(g_previousO.func === 'sine') {
+                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+                } else {
+                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                }
+                g_leftWingAngle = val;
             } else {
-                g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                currentAnim.wingAngle.position? g_leftWingAngle = lerpVal(from.wingAngle.position, to.wingAngle.position, a): null;
             }
 
-            g_leftRightWing = val;
-        } else {
-            currentAnim.wingFrontAngle.position? g_leftRightWing = lerpVal(from.wingFrontAngle.position, to.wingFrontAngle.position, a): null;
-        }
+            if(currentAnim.wingUpAngle.enabled && currentAnim.wingUpAngle.enabled === true) {
+                let g_previousO = currentAnim.wingUpAngle;
+                let val;
+                if(g_previousO.func === 'sine') {
+                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+                } else {
+                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                }
 
-        if(elapsed < currentAnim.delay) {
-            return;
-        }
+                g_wingFrontBackAngle = val;
+            } else {
+                currentAnim.wingUpAngle.position? g_wingFrontBackAngle = lerpVal(from.wingUpAngle.position, to.wingUpAngle.position, a): null;
+            }
 
-        elapsed -= currentAnim.delay;
-        a = elapsed / duration;
+            if(currentAnim.wingFrontAngle.enabled && currentAnim.wingFrontAngle.enabled === true) {
+                let g_previousO = currentAnim.wingFrontAngle;
+                let val;
+                if(g_previousO.func === 'sine') {
+                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+                } else {
+                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                }
 
-        // apply all animation transformations
-        currentAnim.rotX? g_angleX = from.rotX + lerpVal(0, to.rotX, a): null;
-        currentAnim.rotY? g_angleY = from.rotY + lerpVal(0, to.rotY, a): null;
-        currentAnim.rotZ? g_angleZ = from.rotZ + lerpVal(0, to.rotZ, a): null;
+                g_leftRightWing = val;
+            } else {
+                currentAnim.wingFrontAngle.position? g_leftRightWing = lerpVal(from.wingFrontAngle.position, to.wingFrontAngle.position, a): null;
+            }
 
-        currentAnim.headY? g_headY = lerpVal(from.headY, to.headY, a): null;
+            if(elapsed < currentAnim.delay) {
+                break block;
+            }
 
-        currentAnim.rightLegX? g_rightLegXAngle = lerpVal(from.rightLegX, to.rightLegX, a): null;
-        currentAnim.leftLegX? g_leftLegXAngle = lerpVal(from.leftLegX, to.leftLegX, a): null;
+            elapsed -= currentAnim.delay;
+            a = Math.min(1, elapsed / (duration - currentAnim.delay));
 
-        currentAnim.rightLegY? g_rightLegYAngle = lerpVal(from.rightLegY, to.rightLegY, a): null;
-        currentAnim.leftLegY? g_leftLegYAngle = lerpVal(from.leftLegY, to.leftLegY, a): null;
+            //console.log(a);
+            
+            // apply all animation transformations
+            currentAnim.posX? g_X = from.posX + lerpVal(0, to.posX, a): null;
+            currentAnim.posY? g_Y = from.posY + lerpVal(0, to.posY, a): null;
+            currentAnim.posZ? g_Z = from.posZ + lerpVal(0, to.posZ, a): null;
 
-        currentAnim.rightShinX? g_rightShinXAngle = lerpVal(from.rightShinX, to.rightShinX, a): null;
-        currentAnim.leftShinX? g_leftShinXAngle = lerpVal(from.leftShinX, to.leftShinX, a): null;
+            currentAnim.rotX? g_angleX = from.rotX + lerpVal(0, to.rotX, a): null;
+            currentAnim.rotY? g_angleY = from.rotY + lerpVal(0, to.rotY, a): null;
+            currentAnim.rotZ? g_angleZ = from.rotZ + lerpVal(0, to.rotZ, a): null;
 
-        currentAnim.rightShinY? g_rightShinYAngle = lerpVal(from.rightShinY, to.rightShinY, a): null;
-        currentAnim.leftShinY? g_leftShinYAngle = lerpVal(from.leftShinY, to.leftShinY, a): null;
+            currentAnim.headY? g_headY = lerpVal(from.headY, to.headY, a): null;
 
-        currentAnim.rightFoot? g_rightFootAngle = lerpVal(from.rightFoot, to.rightFoot, a): null;
-        currentAnim.leftFoot? g_leftFootAngle = lerpVal(from.leftFoot, to.leftFoot, a): null;
+            currentAnim.rightLegX? g_rightLegXAngle = lerpVal(from.rightLegX, to.rightLegX, a): null;
+            currentAnim.leftLegX? g_leftLegXAngle = lerpVal(from.leftLegX, to.leftLegX, a): null;
 
-        currentAnim.tailAngle? g_tailAngle = lerpVal(from.tailAngle, to.tailAngle, a): null;
+            currentAnim.rightLegY? g_rightLegYAngle = lerpVal(from.rightLegY, to.rightLegY, a): null;
+            currentAnim.leftLegY? g_leftLegYAngle = lerpVal(from.leftLegY, to.leftLegY, a): null;
 
-        currentAnim.posX? g_X = from.posX + lerpVal(0, to.posX, a): null;
-        currentAnim.posY? g_Y = from.posY + lerpVal(0, to.posY, a): null;
-        currentAnim.posZ? g_Z = from.posZ + lerpVal(0, to.posZ, a): null;
+            currentAnim.rightShinX? g_rightShinXAngle = lerpVal(from.rightShinX, to.rightShinX, a): null;
+            currentAnim.leftShinX? g_leftShinXAngle = lerpVal(from.leftShinX, to.leftShinX, a): null;
 
-        currentAnim.leftToeAngle? g_leftToeAngle = lerpVal(from.leftToeAngle, to.leftToeAngle, a): null;
-        currentAnim.rightToeAngle? g_rightToeAngle = lerpVal(from.rightToeAngle, to.rightToeAngle, a): null;
+            currentAnim.rightShinY? g_rightShinYAngle = lerpVal(from.rightShinY, to.rightShinY, a): null;
+            currentAnim.leftShinY? g_leftShinYAngle = lerpVal(from.leftShinY, to.leftShinY, a): null;
 
-        if(elapsed >= g_catchupTime && g_wingNeedCatchup) {
-            g_wingNeedCatchup = false;
-        }
+            currentAnim.rightFoot? g_rightFootAngle = lerpVal(from.rightFoot, to.rightFoot, a): null;
+            currentAnim.leftFoot? g_leftFootAngle = lerpVal(from.leftFoot, to.leftFoot, a): null;
 
-        if(a >= 1) {
-            currentAnim = null;
-        }
-    } 
+            currentAnim.tailAngle? g_tailAngle = lerpVal(from.tailAngle, to.tailAngle, a): null;
+
+            currentAnim.leftToeAngle? g_leftToeAngle = lerpVal(from.leftToeAngle, to.leftToeAngle, a): null;
+            currentAnim.rightToeAngle? g_rightToeAngle = lerpVal(from.rightToeAngle, to.rightToeAngle, a): null;
+
+            if(elapsed >= g_catchupTime && g_wingNeedCatchup) {
+                g_wingNeedCatchup = false;
+            }
+
+            if(a >= 1) {
+                currentAnim = null;
+            }
+        } 
+    }
     if ((g_keepWings && currentAnim === null) || (g_keepWings && currentAnim?.wingAngle.enabled === false && currentAnim?.wingUpAngle.enabled === false && currentAnim?.wingFrontAngle.enabled === false)) {
         let elapsed = g_currentTime - g_previousStartTime - g_previousDelay;
         if(g_previousWingO.func === 'sine') {
@@ -182,7 +186,7 @@ function updateVultureAnimation(vul) {
         }
     }
 
-    console.log(g_rightLegXAngle);
+    console.log(g_Y);
 }
 
 let g_catchupTime = .25;
@@ -216,6 +220,7 @@ let g_leftWingAngle = 70;
 let g_elbowAngle = -165;
 let g_wristAngle = 80;
 let g_wingFrontBackAngle = 0;
+let g_tailAngle = 0;
 
 let g_leftLegXAngle = -90;
 let g_leftLegYAngle = 3;
@@ -283,8 +288,6 @@ function getCurrentPose() {
 }
 
 let identity = new Matrix4();
-
-let g_tailAngle = 0;
 
 let t = g_leftWingAngle / 80;
 

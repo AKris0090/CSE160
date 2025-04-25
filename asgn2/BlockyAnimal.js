@@ -206,12 +206,29 @@ function main() {
     g_lastY = ev.y;
 
     if(ev.buttons == 1 && g_moving === false) {
-      // g_vulture.queuedAnims.push(reset);
-      // g_vulture.queuedAnims.push(landTurn);
-      // g_vulture.queuedAnims.push(threeFourthsBuffer);
-      // g_vulture.queuedAnims.push(oneFourthsBuffer);
-      // g_vulture.queuedAnims.push(flyUpTurn);
-      // g_vulture.queuedAnims.push(startTurn);
+      g_vulture.queuedAnims.push(reset2);
+      g_vulture.queuedAnims.push(landTurn2);
+      g_vulture.queuedAnims.push(threeFourthsBuffer2);
+      g_vulture.queuedAnims.push(oneFourthsBuffer2);
+      g_vulture.queuedAnims.push(flyUpTurn2);
+      g_vulture.queuedAnims.push(startTurn2);
+
+      g_vulture.queuedAnims.push(moveReset);
+      g_vulture.queuedAnims.push(backResetBody);
+      g_vulture.queuedAnims.push(backImpact);
+      g_vulture.queuedAnims.push(backLand);
+      g_vulture.queuedAnims.push(backBuffer1);
+      g_vulture.queuedAnims.push(backFlapping);
+      g_vulture.queuedAnims.push(backRotate);
+      g_vulture.queuedAnims.push(jumpReturn);
+      g_vulture.queuedAnims.push(startReturn);
+
+      g_vulture.queuedAnims.push(reset);
+      g_vulture.queuedAnims.push(landTurn);
+      g_vulture.queuedAnims.push(threeFourthsBuffer);
+      g_vulture.queuedAnims.push(oneFourthsBuffer);
+      g_vulture.queuedAnims.push(flyUpTurn);
+      g_vulture.queuedAnims.push(startTurn);
 
       g_vulture.queuedAnims.push(moveReset);
       g_vulture.queuedAnims.push(moveFlapping);
@@ -280,7 +297,6 @@ function renderAllShapes() {
   g_seconds = nowSeconds - (g_startTime / 1000);
   g_currentTime = nowSeconds;
 
-  // if(g_animated) updateAnimation();
   var cameraMatrix = new Matrix4();
   cameraMatrix.translate(0, 0, -g_Zoom);
   cameraMatrix.rotate(angleY, 1, 0, 0);
