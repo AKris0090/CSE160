@@ -39,12 +39,65 @@ function wingSmoothing(elapsed, o, from) {
     }
 }
 
+
+let g_waitFlapStart = null;
+let g_waitFlapLimit = 23;
+
+let g_headPosStartTime = 0;
+let g_waitHeadPos = 0;
+
+function choseRandomHeadPos(vul) {
+    let elapsedFlap = g_currentTime - g_waitFlapStart;
+    if(elapsedFlap > 30) {
+        let flap = Math.random() < 0.5 ? true : false;
+        if(flap) {
+            vul.queuedAnims.push(stopFlapping);
+            vul.queuedAnims.push(startFlapping);
+        }
+        g_waitFlapStart = g_currentTime;
+    }
+    let elapsedHead = g_currentTime - g_headPosStartTime;
+    if(elapsedHead > g_waitHeadPos) {
+        let head = Math.random() < 0.7 ? true : false;
+        if(head) {
+            vul.queuedAnims.push({
+                time: 0.15,
+                delay: 0,
+                headX: 180 + (Math.random() * 50 - 25),
+                headY: -19.2 + (Math.random() * 20 - 5),
+                headZ: Math.random * 30 - 15,
+                wingAngle: {
+                    enabled: false,
+                },
+                wingUpAngle: {
+                    enabled: false,
+                },
+                wingFrontAngle: {
+                    enabled: false,
+                }
+            });
+            g_waitHeadPos = Math.random() * 4;
+        }
+        g_headPosStartTime = g_currentTime;
+    }
+}
+
 function updateVultureAnimation(vul) {
+    if(g_waitFlapStart == null) {
+        g_waitFlapStart = g_currentTime;
+    }
+    if(g_moving === false) {
+        choseRandomHeadPos(vul);
+    }
+
     if (!currentAnim && vul.queuedAnims && vul.queuedAnims.length > 0) {
         currentAnim = vul.queuedAnims.pop();
         g_animStartTime = g_currentTime;
         g_startPose = getCurrentPose();
         g_moving = true;
+        if(currentAnim.canStop && currentAnim.canStop === false) {
+            g_moving = false;
+        }
         g_wingNeedCatchup = !g_keepWings || currentAnim.needCatch;
 
         if(currentAnim.keepWing && g_keepWings === false) {
@@ -84,7 +137,7 @@ function updateVultureAnimation(vul) {
 
             let flapStartTime = g_animStartTime + currentAnim.delay;
             let elapsedFlap = g_currentTime - flapStartTime;
-            elapsedFlap = Math.max(0, Math.min(1, elapsedFlap)); 
+            elapsedFlap = Math.max(0, elapsedFlap); 
 
             if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
                 let g_previousO = currentAnim.wingAngle;
@@ -142,7 +195,9 @@ function updateVultureAnimation(vul) {
             currentAnim.rotY? g_angleY = from.rotY + lerpVal(0, to.rotY, a): null;
             currentAnim.rotZ? g_angleZ = from.rotZ + lerpVal(0, to.rotZ, a): null;
 
+            currentAnim.headX? g_headX = lerpVal(from.headX, to.headX, a): null;
             currentAnim.headY? g_headY = lerpVal(from.headY, to.headY, a): null;
+            currentAnim.headZ? g_headZ = lerpVal(from.headZ, to.headZ, a): null;
 
             currentAnim.rightLegX? g_rightLegXAngle = lerpVal(from.rightLegX, to.rightLegX, a): null;
             currentAnim.leftLegX? g_leftLegXAngle = lerpVal(from.leftLegX, to.leftLegX, a): null;
@@ -220,7 +275,8 @@ let g_angleY = 0;
 let g_angleZ = 0;
 
 let g_headX = 180;
-let g_headY = 19.2;
+let g_headY = -19.2;
+let g_headZ = 0;
 
 let g_leftWingAngle = 70;
 let g_elbowAngle = -165;
@@ -257,7 +313,9 @@ function getCurrentPose() {
         rotY: g_angleY,
         rotZ: g_angleZ,
 
+        headX: g_headX,
         headY: g_headY,
+        headZ: g_headZ,
 
         rightLegX: g_rightLegXAngle,
         leftLegX: g_leftLegXAngle,
@@ -662,7 +720,17 @@ function drawBody(root) {
     applyColor(chinColor);
     // chin
     body.set(root);
-    body.translate(-3.745, 1.103, 0).rotate(12.1, 0, 0, 1).scale(0.673, 1.936, 0.1);
+    body.translate(-3.745, 1.103, 0).rotate(12.1, 0, 0, 1).scale(0.673, 1.236, 0.15);
+    drawCube(body);
+
+    // back chin
+    body.set(root);
+    body.translate(-3.95, 1.15, 0).rotate(12.1, 0, 0, 1).scale(0.273, 1.236, 0.15);
+    drawCube(body);
+
+    // furthest back chin
+    body.set(root);
+    body.translate(-3.65, 1.35, 0).rotate(12.1, 0, 0, 1).scale(0.273, 1.236, 0.15);
     drawCube(body);
 
     // back body
@@ -673,7 +741,7 @@ function drawBody(root) {
 
     // back neck
     body.set(root);
-    body.translate(-3.3, 1.798, 0).rotate(18.4, 0, 0, 1).scale(0.417, 1.594, 0.4);
+    body.translate(-3.3, 1.798, 0).rotate(18.4, 0, 0, 1).rotate((g_headX - 180) * 1.1, 0, 1, 0).scale(0.417, 1.594, 0.4);
     drawCube(body);
 
     // tailbone
@@ -714,7 +782,7 @@ function drawBody(root) {
 let head = new Matrix4();
 function drawHead(root) {
     head.set(root)
-    head.translate(-3.256, 3.07, 0).rotate(g_headY + g_topBeakAngle, 0, 0, 1).rotate(g_headX, 0, 1, 0)
+    head.translate(-3.256, 3.07, 0).rotate(g_headZ, 1, 0, 0).rotate(g_headX, 0, 1, 0).rotate(g_headY + g_topBeakAngle, 0, 0, 1);
     head.scale(-1, 1, 0.75);
     head.translate(-0.75, 0, 0);
     drawTopBeak(head);
@@ -746,7 +814,7 @@ function drawHead(root) {
 
     // bottom head
     head.set(root)
-    head.translate(-3.256, 3.07, 0).rotate(g_headY + g_bottomBeakAngle, 0, 0, 1).rotate(g_headX, 0, 1, 0)
+    head.translate(-3.256, 3.07, 0).rotate(g_headZ, 1, 0, 0).rotate(g_headX, 0, 1, 0).rotate(g_headY + g_topBeakAngle, 0, 0, 1);
     head.scale(-1, 1, 1);
     head.translate(-0.75, 0, 0);
     drawBottomBeak(head);

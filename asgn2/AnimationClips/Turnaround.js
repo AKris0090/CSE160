@@ -148,7 +148,7 @@ let reset = {
     delay: 0,
     posX: -1.5,
     rotZ: -20,
-    headY: 0,
+    headY: -19.2,
     rightLegX: -90,
     leftLegX: -90,
     rightShinX: 0.01,

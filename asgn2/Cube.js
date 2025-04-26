@@ -82,6 +82,11 @@ function drawAltCube(m) {
     gl.drawArrays(gl.TRIANGLES, 36, 36);
 }
 
+function drawIcoSphere(m) {
+    gl.uniformMatrix4fv(u_ModelMatrix, false, m.elements);
+    gl.drawArrays(gl.TRIANGLES, 168, 60);
+}
+
 function drawCylinder(m) {
     gl.uniformMatrix4fv(u_ModelMatrix, false, m.elements);
     gl.drawArrays(gl.TRIANGLES, 72, 96);

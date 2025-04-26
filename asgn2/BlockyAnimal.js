@@ -43,10 +43,11 @@ let g_ViewProjection = new Matrix4();
 let g_globalRotateMatrix;
 let g_vulture;
 let g_area;
+let g_paused = false;
+let g_centeredCamera = true;
 
 let g_currentTime = -1;
 let g_time = -1;
-let g_animated = false;
 
 let angleX = 0;
 let angleY = 25;
@@ -58,7 +59,6 @@ let g_lookAtZ = 0;
 let upTop = false;
 
 var g_startTime = performance.now() / 1000.0;
-var g_seconds = performance.now() / 1000.0 - g_startTime;
 
 function setupWebGL() {
     canvas = document.getElementById('webgl');
@@ -115,7 +115,7 @@ function connectVariablesToGLSL() {
 
 function addActionsForHtmlUI() {
   // holy moly
-  document.getElementById('wingSlider').addEventListener('mousemove', function() { g_leftWingAngle = this.value;});
+  document.getElementById('wingSlider')?.addEventListener('mousemove', function() { g_leftWingAngle = this.value;});
   document.getElementById('handXSlider').addEventListener('mousemove', function() { g_leftRightWing = this.value;});
   document.getElementById('wingFrontBackSlider').addEventListener('mousemove', function() { g_wingFrontBackAngle = this.value; });
   document.getElementById('tailSlider').addEventListener('mousemove', function() { g_tailAngle = this.value; });
@@ -123,16 +123,16 @@ function addActionsForHtmlUI() {
   document.getElementById('topBeakSlider').addEventListener('mousemove', function() { g_topBeakAngle = this.value; });
   document.getElementById('bottomBeakSlider').addEventListener('mousemove', function() { g_bottomBeakAngle = this.value; });
 
-  document.getElementById('bodyAngleXSlider').addEventListener('mousemove', function() { g_xWing = this.value; });
-  document.getElementById('bodyAngleYSlider').addEventListener('mousemove', function() { g_yWing = this.value; });
-  document.getElementById('bodyAngleZSlider').addEventListener('mousemove', function() { g_zWing = this.value; });
+  document.getElementById('bodyAngleXSlider')?.addEventListener('mousemove', function() { g_xWing = this.value; });
+  document.getElementById('bodyAngleYSlider')?.addEventListener('mousemove', function() { g_yWing = this.value; });
+  document.getElementById('bodyAngleZSlider')?.addEventListener('mousemove', function() { g_zWing = this.value; });
 
-  document.getElementById('bodyXSlider').addEventListener('mousemove', function() { g_X = this.value; });
-  document.getElementById('bodyYSlider').addEventListener('mousemove', function() { g_Y = this.value; });
-  document.getElementById('bodyZSlider').addEventListener('mousemove', function() { g_Z = this.value; });
+  document.getElementById('bodyXSlider')?.addEventListener('mousemove', function() { g_X = this.value; });
+  document.getElementById('bodyYSlider')?.addEventListener('mousemove', function() { g_Y = this.value; });
+  document.getElementById('bodyZSlider')?.addEventListener('mousemove', function() { g_Z = this.value; });
 
-  document.getElementById('headSlider').addEventListener('mousemove', function() { g_headX = this.value; });
-  document.getElementById('headYSlider').addEventListener('mousemove', function() { g_headY = this.value; });
+  document.getElementById('headSlider')?.addEventListener('mousemove', function() { g_headX = this.value; });
+  document.getElementById('headYSlider')?.addEventListener('mousemove', function() { g_headY = this.value; });
 
   document.getElementById('rightLegXSlider').addEventListener('mousemove', function() { g_rightLegXAngle = this.value; });
   document.getElementById('rightLegYSlider').addEventListener('mousemove', function() { g_rightLegYAngle = this.value; });
@@ -146,8 +146,10 @@ function addActionsForHtmlUI() {
   document.getElementById('leftFootAngle').addEventListener('mousemove', function() { g_leftFootAngle = this.value; });
   document.getElementById('leftToeSlider').addEventListener('mousemove', function() { g_leftToeAngle = this.value; });
 
-  document.getElementById('start').onclick = function() { g_animated = true; g_startTime = performance.now() / 1000.0; };
-  document.getElementById('stop').onclick = function() { g_animated = false; };
+  document.getElementById('pauseButton').onclick = function() { g_paused = true; };
+  document.getElementById('resumeButton').onclick = function() { g_paused = false; };
+  document.getElementById('focusButton').onclick = function() { g_centeredCamera = false; };
+  document.getElementById('centerButton').onclick = function() { g_centeredCamera = true; };
 }
 
 // could not be bothered calculating these myself LOL - math from the textbook on calculating normals of a triangle
@@ -199,29 +201,30 @@ function addIcoSphereVertices() {
   g_icoVerts.push([-t,  0, -1]);
   g_icoVerts.push([-t,  0,  1]);
 
-  addVertsFromIndices([0, 11, 5]);
-  addVertsFromIndices([0, 5, 1]);
-  addVertsFromIndices([0, 1, 7]);
-  addVertsFromIndices([0, 7, 10]);
-  addVertsFromIndices([0, 10, 11]);
-  addVertsFromIndices([1, 5, 9]);
-  addVertsFromIndices([5, 11, 4]);
-  addVertsFromIndices([11, 10, 2]);
-  addVertsFromIndices([10, 7, 6]);
-  addVertsFromIndices([7, 1, 8]);
-  addVertsFromIndices([3, 9, 4]);
-  addVertsFromIndices([3, 4, 2]);
-  addVertsFromIndices([3, 2, 6]);
-  addVertsFromIndices([3, 6, 8]);
-  addVertsFromIndices([3, 8, 9]);
-  addVertsFromIndices([4, 9, 5]);
-  addVertsFromIndices([2, 4, 11]);
-  addVertsFromIndices([6, 2, 10]);
-  addVertsFromIndices([8, 6, 7]);
-  addVertsFromIndices([9, 8, 1]); // 180 vertices total
+  addVertsFromIndices([11, 0, 5]);
+  addVertsFromIndices([5, 0, 1]);
+  addVertsFromIndices([1, 0, 7]);
+  addVertsFromIndices([7, 0, 10]);
+  addVertsFromIndices([10, 0, 11]);
+  addVertsFromIndices([5, 1, 9]);
+  addVertsFromIndices([11, 5, 4]);
+  addVertsFromIndices([10, 11, 2]);
+  addVertsFromIndices([7, 10, 6]);
+  addVertsFromIndices([1, 7, 8]);
+  addVertsFromIndices([9, 3, 4]);
+  addVertsFromIndices([4, 3, 2]);
+  addVertsFromIndices([2, 3, 6]);
+  addVertsFromIndices([6, 3, 8]);
+  addVertsFromIndices([8, 3, 9]);
+  addVertsFromIndices([9, 4, 5]);
+  addVertsFromIndices([4, 2, 11]);
+  addVertsFromIndices([2, 6, 10]);
+  addVertsFromIndices([6, 8, 7]);
+  addVertsFromIndices([8, 9, 1]);
 }
 
 function createAttachCubeVertexBuffer() {
+  addIcoSphereVertices();
   cubeVertices = new Float32Array(cubeArray);
   
   // Create a buffer object
@@ -316,9 +319,13 @@ function main() {
     if(ev.buttons == 2 && g_moving === false) {
       if(upTop) {
         g_moving = true;
+        g_vulture.queuedAnims = [];
+        currentAnim = null;
         flyDown();
       } else {
         g_moving = true;
+        g_vulture.queuedAnims = [];
+        currentAnim = null;
         flyUp();
       }
     }
@@ -351,18 +358,28 @@ function main() {
   requestAnimationFrame(tick);
 }
 
+let g_pauseTime;
+
 function renderAllShapes() {
   let now = performance.now();
   let nowSeconds = now / 1000;
   g_time = nowSeconds;
 
   let frameTime = now - g_startTime;
-  g_seconds = nowSeconds - (g_startTime / 1000);
-  g_currentTime = nowSeconds;
+  if(!g_paused) {
+    g_currentTime = nowSeconds;
+    g_pauseTime = g_currentTime;
+  }
 
   // https://stackoverflow.com/questions/21603412/algorithm-3d-orbiting-camera-control-with-mouse-drag
+  
   var cameraMatrix = new Matrix4();
-  cameraMatrix.translate(0, 0, -g_Zoom).rotate(angleY, 1, 0, 0).rotate(angleX, 0, 1, 0).translate(-g_lookAtX, -g_lookAtY, -g_lookAtZ);
+  cameraMatrix.translate(0, 0, -g_Zoom).rotate(angleY, 1, 0, 0).rotate(angleX, 0, 1, 0)
+  if(g_centeredCamera) {
+    cameraMatrix.translate(-g_lookAtX, -g_lookAtY, -g_lookAtZ);
+  } else {
+    cameraMatrix.translate(-g_X, -g_Y, -g_Z);
+  }
 
   var finalMat = new Matrix4().set(g_ViewProjection);
   finalMat.multiply(cameraMatrix);

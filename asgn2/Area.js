@@ -8,6 +8,7 @@ class Area {
     render() {
         applyColor(headColor);
         this.newM.set(this.matrix);
+        //drawIcoSphere(this.newM);
         this.newM.translate(-1, -3, -1);
         drawCube(this.newM);
         this.newM.set(this.matrix);
