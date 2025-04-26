@@ -9,7 +9,7 @@ let bodyColor = [0.953, 0.584, 0.22, 1.0];
 let thighColor = [0.988, 0.788, 0.349, 1.0];
 let darkBrown = [0.275, 0.129, 0.063, 1.0];
 let lightBrown = [0.561, 0.38, 0.235, 1.0];
-let lightestBrown = [0.882, 0.749, 0.619, 1.0]
+let lightestBrown = [0.622, 0.5, 0.37, 1.0]
 let footColor = [0.796, 0.529, 0.337, 1.0];
 let black = [0.0, 0.0, 0.0, 1.0];
 
@@ -49,7 +49,7 @@ let g_waitHeadPos = 0;
 function choseRandomHeadPos(vul) {
     let elapsedFlap = g_currentTime - g_waitFlapStart;
     if(elapsedFlap > 30) {
-        let flap = Math.random() < 0.5 ? true : false;
+        let flap = Math.random() < 0.75 ? true : false;
         if(flap) {
             vul.queuedAnims.push(stopFlapping);
             vul.queuedAnims.push(startFlapping);
@@ -58,7 +58,7 @@ function choseRandomHeadPos(vul) {
     }
     let elapsedHead = g_currentTime - g_headPosStartTime;
     if(elapsedHead > g_waitHeadPos) {
-        let head = Math.random() < 0.7 ? true : false;
+        let head = Math.random() < 0.8 ? true : false;
         if(head) {
             vul.queuedAnims.push({
                 time: 0.15,
@@ -98,7 +98,10 @@ function updateVultureAnimation(vul) {
         if(currentAnim.canStop && currentAnim.canStop === false) {
             g_moving = false;
         }
-        g_wingNeedCatchup = !g_keepWings || currentAnim.needCatch;
+        g_wingNeedCatchup = !g_keepWings;
+        if(currentAnim.needCatch === false) {
+            g_wingNeedCatchup = false;
+        }
 
         if(currentAnim.keepWing && g_keepWings === false) {
             g_keepWings = true;
@@ -139,52 +142,55 @@ function updateVultureAnimation(vul) {
             let elapsedFlap = g_currentTime - flapStartTime;
             elapsedFlap = Math.max(0, elapsedFlap); 
 
-            if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
-                let g_previousO = currentAnim.wingAngle;
-                if(g_previousO.func === 'sine') {
-                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
-                } else {
-                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
-                }
-                g_leftWingAngle = val;
-            } else {
-                currentAnim.wingAngle.position? g_leftWingAngle = lerpVal(from.wingAngle.position, to.wingAngle.position, a): null;
-            }
+            wing: {
 
-            if(currentAnim.wingUpAngle.enabled && currentAnim.wingUpAngle.enabled === true) {
-                let g_previousO = currentAnim.wingUpAngle;
-                let val;
-                if(g_previousO.func === 'sine') {
-                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
-                } else {
-                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                if(elapsed < currentAnim.delay) {
+                    break wing;
                 }
 
-                g_wingFrontBackAngle = val;
-            } else {
-                currentAnim.wingUpAngle.position? g_wingFrontBackAngle = lerpVal(from.wingUpAngle.position, to.wingUpAngle.position, a): null;
-            }
-
-            if(currentAnim.wingFrontAngle.enabled && currentAnim.wingFrontAngle.enabled === true) {
-                let g_previousO = currentAnim.wingFrontAngle;
-                let val;
-                if(g_previousO.func === 'sine') {
-                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+                if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
+                    let g_previousO = currentAnim.wingAngle;
+                    if(g_previousO.func === 'sine') {
+                        g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+                    } else {
+                        g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                    }
+                    g_leftWingAngle = val;
                 } else {
-                    g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                    currentAnim.wingAngle.position? g_leftWingAngle = lerpVal(from.wingAngle.position, to.wingAngle.position, a): null;
                 }
 
-                g_leftRightWing = val;
-            } else {
-                currentAnim.wingFrontAngle.position? g_leftRightWing = lerpVal(from.wingFrontAngle.position, to.wingFrontAngle.position, a): null;
+                if(currentAnim.wingUpAngle.enabled && currentAnim.wingUpAngle.enabled === true) {
+                    let g_previousO = currentAnim.wingUpAngle;
+                    let val;
+                    if(g_previousO.func === 'sine') {
+                        g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+                    } else {
+                        g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingUpAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                    }
+
+                    g_wingFrontBackAngle = val;
+                } else {
+                    currentAnim.wingUpAngle.position? g_wingFrontBackAngle = lerpVal(from.wingUpAngle.position, to.wingUpAngle.position, a): null;
+                }
+
+                if(currentAnim.wingFrontAngle.enabled && currentAnim.wingFrontAngle.enabled === true) {
+                    let g_previousO = currentAnim.wingFrontAngle;
+                    let val;
+                    if(g_previousO.func === 'sine') {
+                        g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedSine(elapsedFlap, g_previousO);
+                    } else {
+                        g_wingNeedCatchup? val = wingSmoothing(elapsedFlap, g_previousO, from.wingFrontAngle.position) : val = getPhaseCorrectedCosine(elapsedFlap, g_previousO);
+                    }
+
+                    g_leftRightWing = val;
+                } else {
+                    currentAnim.wingFrontAngle.position? g_leftRightWing = lerpVal(from.wingFrontAngle.position, to.wingFrontAngle.position, a): null;
+                }
             }
 
-            if(elapsed < currentAnim.delay) {
-                break block;
-            }
-
-            elapsed -= currentAnim.delay;
-            a = Math.min(1, elapsed / (duration - currentAnim.delay));
+            // elapsed -= currentAnim.delay;
+            // a = Math.min(1, elapsed / (duration - currentAnim.delay));
             
             // apply all animation transformations
             currentAnim.posX? g_X = from.posX + lerpVal(0, to.posX, a): null;
@@ -250,7 +256,7 @@ function updateVultureAnimation(vul) {
     }
 }
 
-let g_catchupTime = .25;
+let g_catchupTime = 0.1;
 let g_keepWings = false;
 let g_previousWingO = null;
 let g_previousUpWingO = null;

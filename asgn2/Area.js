@@ -1,3 +1,5 @@
+let lightPurple = [0.761, 0.5, 1, 0.25];
+
 class Area {
     constructor() {
         this.matrix = new Matrix4();
@@ -6,13 +8,13 @@ class Area {
     }
   
     render() {
-        applyColor(headColor);
+        applyColor(lightPurple);
+
+        this.newM.set(this.matrix).translate(-1.5, -3, -1.5).scale(2, 1, 2);
+        drawCube(this.newM);
         this.newM.set(this.matrix);
+        this.newM.translate(-7.25, 0, -7.25).scale(2, 3, 2);
+        drawCube(this.newM);
         //drawIcoSphere(this.newM);
-        this.newM.translate(-1, -3, -1);
-        drawCube(this.newM);
-        this.newM.set(this.matrix);
-        this.newM.translate(-7.25, 0, -7.25).scale(1, 3, 1);
-        drawCube(this.newM);
     }
 }

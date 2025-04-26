@@ -18,7 +18,7 @@ var VSHADER_SOURCE =
 // Fragment shader program
 var FSHADER_SOURCE =
   `precision mediump float;
-  const vec3 u_lightPos = normalize(vec3(5, -5, 15));
+  const vec3 u_lightPos = normalize(vec3(5, -15, 15));
 
   varying mediump vec3 v_normalOut;
   uniform vec4 u_FragColor;
@@ -49,11 +49,11 @@ let g_centeredCamera = true;
 let g_currentTime = -1;
 let g_time = -1;
 
-let angleX = 0;
-let angleY = 25;
-let g_Zoom = 10;
-let g_lookAtX = -10;
-let g_lookAtY = 0;
+let angleX = -40.8;
+let angleY = 7.6;
+let g_Zoom = 30.1;
+let g_lookAtX = -17.25;
+let g_lookAtY = 9;
 let g_lookAtZ = 0;
 
 let upTop = false;
