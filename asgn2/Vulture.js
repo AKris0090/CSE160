@@ -1,11 +1,17 @@
-let bodyColor = [1, 0.85, 0.3, 1.0];
-let wingColor = [0, 0.5, 0.5, 1.0];
-let headColor = [0.98, 0.85, 0.85, 1.0];
-let beakColor = [0.25, 0.75, 0.75, 1.0];
-let bottomBeakColor = [0.75, 0.25, 0.25, 1.0]
-let featherColor = [0.7, 0.32, 1, 1.0]
-let secondaryFeatherColor = [1, 0.62, 0, 1.0]
-let primaryFeatherColor = [1, 0.45, 0.45, 1.0]
+let headColor = [1, 1, 1, 1];
+let whiskerColor = [0.105, 0.133, 0.153, 1.0];
+let eyeColor = [0.862, 0.027, 0, 1.0];
+let beakColor = [0.553, 0.471, 0.38, 1.0];
+let scalpColor = [0.9610, 0.667, 0.275, 1.0];
+let chinColor = [0.886, 0.207, 0.125, 1.0];
+let chestColor = [0.875, 0.305, 0.02, 1.0];
+let bodyColor = [0.953, 0.584, 0.22, 1.0];
+let thighColor = [0.988, 0.788, 0.349, 1.0];
+let darkBrown = [0.275, 0.129, 0.063, 1.0];
+let lightBrown = [0.561, 0.38, 0.235, 1.0];
+let lightestBrown = [0.882, 0.749, 0.619, 1.0]
+let footColor = [0.796, 0.529, 0.337, 1.0];
+let black = [0.0, 0.0, 0.0, 1.0];
 
 class Vulture {
     constructor() {
@@ -56,6 +62,10 @@ function updateVultureAnimation(vul) {
             g_previousDelay = -1;
             g_previousStartTime = 0;
         }
+    }
+
+    if(g_moving === true && vul.queuedAnims.length === 0) {
+        g_moving = false;
     }
 
     block: {
@@ -198,8 +208,8 @@ let g_moving = false;
 let g_startPose = null;
 let g_animStartTime = -1;
 
-let g_topBeakAngle = 14;
-let g_bottomBeakAngle = 10;
+let g_topBeakAngle = 0;
+let g_bottomBeakAngle = 0;
 
 let g_X = 0;
 let g_Y = 0;
@@ -310,7 +320,7 @@ function renderVulture(vul) {
 let toe = new Matrix4();
 
 function drawToe(root, angle, length, legType, talon = false) {
-    applyColor(bottomBeakColor);
+    applyColor(footColor);
 
     toe.set(root);
 
@@ -325,14 +335,14 @@ function drawToe(root, angle, length, legType, talon = false) {
     drawAltCube(toe);
 
     // apply talon color
-    applyColor(headColor);
+    applyColor(black);
     toe.translate(1, 0, 0).scale(1 / (length / 3), 5, 5).rotate(g_toeAngle * 5, 0, 0, 1).scale(0.3, 0.15, 0.05);
     drawAltCube(toe);
 }
 
 let shin = new Matrix4();
 function drawShin(root, legType) {
-    applyColor(wingColor);
+    applyColor(lightBrown);
     shin.set(root);
 
     if(legType === 1) {
@@ -357,27 +367,25 @@ function drawShin(root, legType) {
 
 let thigh = new Matrix4();
 function drawLeg(root, legType) {
-    applyColor(primaryFeatherColor);
-
     if(legType === 1) {
         thigh.set(root);
         thigh.translate(-2.571, -0.621, -0.563).rotate(g_leftLegXAngle, 0, 0, 1).rotate(g_leftLegYAngle, 0, 1, 0);
         drawShin(thigh, legType);
-        applyColor(secondaryFeatherColor);
+        applyColor(thighColor);
         thigh.scale(1.168 * 2, 0.593 * 2, 0.39 * 2);
         drawAltCube(thigh);
     } else {
         thigh.set(root);
         thigh.translate(-2.571, -0.621, 0.563).rotate(g_rightLegXAngle, 0, 0, 1).rotate(g_rightLegYAngle, 0, 1, 0)
         drawShin(thigh, legType);
-        applyColor(secondaryFeatherColor);
+        applyColor(thighColor);
         thigh.scale(1.168 * 2, 0.593 * 2, 0.39 * 2);
         drawAltCube(thigh);
     }
 }
 
 function drawWing(root, mirror) {
-    applyColor(wingColor);
+    applyColor(darkBrown);
 
     let shoulder = new Matrix4().set(root);
     if(mirror == -1) {
@@ -395,9 +403,9 @@ function drawWing(root, mirror) {
 let feather = new Matrix4();
 function drawFlightFeather(root, angle, angle2, length, width, angle3 = 0, height = 0.2, altColor = false) {
     if(altColor) {
-        applyColor(wingColor);
+        applyColor(lightBrown);
     } else {
-        applyColor(featherColor);
+        applyColor(lightestBrown);
     }
     feather.set(root);
     feather.rotate(angle, 0, 1, 0).rotate(angle2, 0, 0, 1).rotate(angle3, 1, 0, 0).scale(length * 6, height, width);
@@ -407,7 +415,7 @@ function drawFlightFeather(root, angle, angle2, length, width, angle3 = 0, heigh
 
 let feather2 = new Matrix4();
 function drawSecondaryFeather(root, angle, angle2, length, width) {
-    applyColor(secondaryFeatherColor);
+    applyColor(lightBrown);
     feather2.set(root);
     feather2.rotate(angle, 0, 1, 0).rotate(angle2, 0, 0, 1).scale(length * 4, 1.1, width);
     drawAltCube(feather2);
@@ -415,17 +423,11 @@ function drawSecondaryFeather(root, angle, angle2, length, width) {
 
 let feather3 = new Matrix4();
 function drawPrimaryFeather(root, angle, angle2, angle3, length, width, height = 0.75) {
-    applyColor(primaryFeatherColor);
+    applyColor(darkBrown);
     feather3.set(root);
     feather3.rotate(angle3, 0, 0, 1).rotate(angle, 0, 1, 0).rotate(angle2, 1, 0, 0).scale(length * 2, height, width);
     drawAltCube(feather3);
 }
-
-// TODO: FIX FOREARM TOP PRIMARY FEATHERS CLIPPING?
-
-// TODO: FACE DECOR
-
-// TODO PERFORMANCE: INSTANTIATE ALL MATRICES AT TOP? to remove any need of new keyword
 
 let topWing = new Matrix4();
 function drawTopWing(root) {
@@ -466,7 +468,7 @@ function drawTopWing(root) {
     topWing.translate(0, 0, .65);
     drawFlightFeather(topWing, lerpVal(0, -60, t), lerpVal(0, -50, t), .6, 0.5);
 
-    applyColor(wingColor);
+    applyColor(darkBrown);
     topWing.set(root);
     topWing.translate(0, 0, -1).scale(0.2, 0.2, 1).translate(0, 0, 1.25);
     drawCube(topWing);
@@ -529,7 +531,7 @@ function drawForeArm(root) {
     foreArm.translate(0, 0, 2.5);
     drawFlightFeather(foreArm, lerpVal(10, 98, t), lerpVal(0, -50, t), 3.9, 2.4, lerpVal(0, 90, t));
 
-    applyColor(wingColor);
+    applyColor(darkBrown);
     foreArm.set(root).translate(0, 0, -1.5).scale(1, 1, 7).translate(0, 0, 1);
     drawCube(foreArm);
 }
@@ -550,28 +552,28 @@ function drawHand(root) {
 
     // draw primary flight feathers
     hand.translate(0.1, 0.6, 0.1);
-    drawFlightFeather(hand, lerpVal(-90, -90, t), 0, 3.3, 2);
+    drawFlightFeather(hand, lerpVal(-90, -105, t), 0, 3.3, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-80, -88, t), 0, 3.35, 2);
+    drawFlightFeather(hand, lerpVal(-80, -100, t), 0, 3.35, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-70, -86, t), 0, 3.4, 2);
+    drawFlightFeather(hand, lerpVal(-70, -96, t), 0, 3.4, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-60, -84, t), 0, 3.45, 2);
+    drawFlightFeather(hand, lerpVal(-60, -92, t), 0, 3.45, 2);
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-50, -82, t), 0, 3.5, 2, lerpVal(0, -20, t));
+    drawFlightFeather(hand, lerpVal(-50, -88, t), 0, 3.5, 2, lerpVal(0, -20, t));
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-40, -80, t), lerpVal(0, -0.5, t), 3.55, 2, lerpVal(0, -30, t));
+    drawFlightFeather(hand, lerpVal(-40, -84, t), lerpVal(0, -0.5, t), 3.55, 2, lerpVal(0, -30, t));
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-31, -76, t), lerpVal(0, -2, t), 3.6, 2, lerpVal(0, -40, t));
+    drawFlightFeather(hand, lerpVal(-31, -80, t), lerpVal(0, -2, t), 3.6, 2, lerpVal(0, -40, t));
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-23, -72, t), lerpVal(0, -4, t), 3.65, 2, lerpVal(0, -50, t));
+    drawFlightFeather(hand, lerpVal(-23, -76, t), lerpVal(0, -4, t), 3.65, 2, lerpVal(0, -50, t));
     hand.translate(0, 0, 0.1);
-    drawFlightFeather(hand, lerpVal(-15, -68, t), lerpVal(0, -6, t), 3.7, 2, lerpVal(0, -60, t));
+    drawFlightFeather(hand, lerpVal(-15, -72, t), lerpVal(0, -6, t), 3.7, 2, lerpVal(0, -60, t));
 
     // secondary flight feathers
     hand.set(root);
     hand.translate(0.1, 0.5, 0.1);
-    drawSecondaryFeather(hand, lerpVal(-90, -110, t), 0, 2.5, 2);
+    drawSecondaryFeather(hand, lerpVal(-90, -110, t), 0, 2.25, 2);
     hand.translate(0, 0, 0.1);
     drawSecondaryFeather(hand, lerpVal(-80, -100, t), 0, 2.5, 2);
     hand.translate(0, 0, 0.1);
@@ -611,15 +613,22 @@ function drawHand(root) {
     hand.translate(0, 0, 0.1);
     drawPrimaryFeather(hand, lerpVal(-15, -70, t), 0, 0, 6, 2);
 
-    hand.set(root).translate(-1, 0, 6.5)
-    hand.scale(2, 2, 12)
-    applyColor(wingColor);
+    hand.set(root).translate(-1, 0, 2.5)
+    hand.scale(2, 2, 7)
+    applyColor(darkBrown);
     drawAltCube(hand);
 }
 
+let g_xWing = 20;
+let g_yWing = 170;
+let g_zWing = 73;
+
 let wrist = new Matrix4();
 function drawWrist(root) {
-    wrist.set(root).translate(0, 0, 3).rotate((2 * g_leftWingAngle + 30), 0, 1, 0).rotate((0.4167 * g_leftWingAngle - 3.333), 1, 0, 0).rotate(0.85 * g_leftWingAngle, 0, 0, 1).scale(0.185, 0.185, 0.26);
+    // wrist.set(root).translate(0, 0, 3).rotate((2 * g_leftWingAngle + 30), 0, 1, 0).rotate((0.4167 * g_leftWingAngle - 3.333), 1, 0, 0).rotate(0.85 * g_leftWingAngle, 0, 0, 1).scale(0.185, 0.185, 0.26);
+    //wrist.set(root).translate(0, 0, 3).rotate(g_yWing, 0, 1, 0).rotate(g_xWing, 1, 0, 0).rotate(g_zWing, 0, 0, 1).scale(0.185, 0.185, 0.26);
+
+    wrist.set(root).translate(0, 0, 3).rotate(2 * g_leftWingAngle + 30, 0, 1, 0).rotate(0.333 * g_leftWingAngle -3.333, 1, 0, 0).rotate(1.042 * g_leftWingAngle, 0, 0, 1).scale(0.185, 0.185, 0.26);
 
     drawHand(wrist);
     drawCube(wrist);
@@ -627,8 +636,8 @@ function drawWrist(root) {
 
 let body = new Matrix4();
 function drawBody(root) {
+    
     applyColor(bodyColor);
-
     // chest
     body.set(root)
     body.translate(-3.272, -0.238, 0).rotate(29.5, 0, 0, 1).scale(1.162, 1.0, 0.85);
@@ -639,34 +648,37 @@ function drawBody(root) {
     body.translate(-2.013, -1.122, 0).rotate(75.9, 0, 0, 1).scale(0.984, 1.601, 0.753);
     drawCube(body);
 
+    applyColor(chestColor);
     // top chest
     body.set(root);
-    body.translate(-4.07, 0.612, 0).rotate(1.7, 0, 0, 1).scale(0.76, 0.758, 0.603);
+    body.translate(-4.07, 0.612, 0).rotate(1.7, 0, 0, 1).scale(0.76, 0.758, 0.55);
     drawCube(body);
 
     // bottom neck
     body.set(root);
-    body.translate(-4.24, 1.453, 0).rotate(-16.9, 0, 0, 1).scale(0.467, 0.376, 0.458);
+    body.translate(-4.24, 1.453, 0).rotate(-16.9, 0, 0, 1).scale(0.467, 0.376, 0.35);
     drawCube(body);
 
+    applyColor(chinColor);
     // chin
     body.set(root);
-    body.translate(-3.745, 1.103, 0).rotate(12.1, 0, 0, 1).scale(0.673, 1.936, 0.333);
+    body.translate(-3.745, 1.103, 0).rotate(12.1, 0, 0, 1).scale(0.673, 1.936, 0.1);
     drawCube(body);
 
     // back body
+    applyColor(scalpColor);
     body.set(root);
-    body.translate(-3.272, -0.238, 0).rotate(29.5, 0, 0, 1).scale(1.369, 0.601, 0.573);
+    body.translate(-3.272, -0.238, 0).rotate(29.5, 0, 0, 1).scale(1.369, 0.601, 0.3);
     drawCube(body);
 
     // back neck
     body.set(root);
-    body.translate(-3.3, 1.798, 0).rotate(18.4, 0, 0, 1).scale(0.417, 1.594, 0.417);
+    body.translate(-3.3, 1.798, 0).rotate(18.4, 0, 0, 1).scale(0.417, 1.594, 0.4);
     drawCube(body);
 
     // tailbone
     body.set(root);
-    body.translate(-0.225, -1.642, 0).rotate(75.9, 0, 0, 1).scale(0.545, 0.887, 0.417);
+    body.translate(-0.225, -1.642, 0).rotate(75.9, 0, 0, 1).scale(0.545, 0.887, 0.217);
     drawCube(body);
 
     // bottom tail feathers
@@ -702,54 +714,80 @@ function drawBody(root) {
 let head = new Matrix4();
 function drawHead(root) {
     head.set(root)
-    head.translate(-3.256, 3.07, 0).rotate(g_headY, 0, 0, 1).rotate(g_headX, 0, 1, 0)
-    head.scale(-1, 1, 1);
+    head.translate(-3.256, 3.07, 0).rotate(g_headY + g_topBeakAngle, 0, 0, 1).rotate(g_headX, 0, 1, 0)
+    head.scale(-1, 1, 0.75);
     head.translate(-0.75, 0, 0);
     drawTopBeak(head);
-    drawBottomBeak(head);
     head.translate(0.75, 0, 0);
+    head.scale(1, 1, 4/3);
 
     applyColor(headColor);
     head.scale(-1, 1, 1);
-    head.scale(0.860 * 2, 0.507 * 2, 0.35 * 2);
+    head.scale(0.825 * 2, 0.575, 0.3);
+    head.translate(0.02, 0.15, 0);
+    drawAltCube(head);
+
+    // eye black block
+    applyColor(whiskerColor);
+    head.scale(1.005, 0.6, 1.5);
+    head.translate(0.01, -0.05, 0);
+    drawAltCube(head);
+
+    // eyes
+    applyColor(eyeColor);
+    head.translate(0.7, 0, -0.505).rotate(90, 1, 0, 0).scale(0.2, 1.01, 0.8);
+    drawCylinder(head);
+    applyColor(headColor);
+    head.translate(0, -0.005, 0).scale(0.75, 1.01, 0.75);
+    drawCylinder(head);
+    applyColor(black);
+    head.translate(0, -0.005, 0).scale(0.5, 1.01, 0.5);
+    drawCylinder(head);
+
+    // bottom head
+    head.set(root)
+    head.translate(-3.256, 3.07, 0).rotate(g_headY + g_bottomBeakAngle, 0, 0, 1).rotate(g_headX, 0, 1, 0)
+    head.scale(-1, 1, 1);
+    head.translate(-0.75, 0, 0);
+    drawBottomBeak(head);
+    head.translate(0.75, 0, 0);
+
+    applyColor(thighColor);
+    head.scale(-1, 1, 1);
+    head.scale(0.825 * 2, 0.3, 0.26);
+    head.translate(0.02, -1.05, 0);
     drawAltCube(head);
 }
 
 let beak = new Matrix4();
 function drawTopBeak(root) {
-    applyColor(beakColor);
-
     // draw main top beak
-    beak.set(root);
-    beak.translate(-.5, 0, 0).rotate(g_topBeakAngle, 0, 0, 1).translate(-0.544, 0.103, 0);
+    beak.set(root).translate(-.5, 0, 0).rotate(14, 0, 0, 1).translate(-0.544, 0.103, 0);
 
-    // drawk all children of top beak
+    // draw all children of top beak
     drawTopBeakParts(beak);
+    
+    applyColor(whiskerColor);
     beak.scale(0.525, 0.146, 0.176);
     drawCube(beak);
 }
 
 let beak2 = new Matrix4();
 function drawBottomBeak(root) {
-    applyColor(bottomBeakColor);
-
     beak2.set(root);
     beak2.translate(-.5, 0, 0).rotate(g_bottomBeakAngle, 0, 0, 1).translate(-.51, -0.18, 0);
     drawBottomBeakParts(beak2);
-    beak2.scale(0.525, 0.076, 0.107);
+    applyColor(thighColor);
+    beak2.scale(0.525, 0.076, 0.075);
     drawCube(beak2);
 }
 
 let parts = new Matrix4();
 function drawBottomBeakParts(root) {
     // bottom beak pike
+    applyColor(beakColor);
     parts.set(root);
     parts.translate(-0.501, 0.063, 0).rotate(-42.1, 0, 0, 1).scale(0.068, 0.029, 0.044);
-    drawCube(parts);
-
-    // bottom beak chin
-    parts.set(root);
-    parts.translate(0.1, -0.08, 0).rotate(-46.8, 0, 0, 1).scale(0.213, 0.151, 0.06);
     drawCube(parts);
 }
 
@@ -757,17 +795,33 @@ let parts2 = new Matrix4();
 function drawTopBeakParts(root) {
     // front top beak
     parts2.set(root);
-    parts2.translate(-0.547, -0.134, 0).rotate(-29.8, 0, 0, 1).scale(0.112, 0.195, 0.146);
+    parts2.translate(-0.547, -0.134, 0).rotate(-29.8, 0, 0, 1).scale(0.112, 0.195, 0.05);
     drawCube(parts2);
 
     // peak pike
     parts2.set(root);
-    parts2.translate(-0.652, -0.332, 0).rotate(-3.24, 0, 0, 1).scale(0.052, 0.091, 0.063);
+    parts2.translate(-0.652, -0.332, 0).rotate(-3.24, 0, 0, 1).scale(0.052, 0.091, 0.025);
     drawCube(parts2);
 
     // top of top beak
+    applyColor(headColor);
     parts2.set(root);
     parts2.translate(-0.05, 0.1, 0).rotate(15.4, 0, 0, 1).scale(0.366, 0.156, 0.084);
+    drawCube(parts2);
+
+    // back moustache
+    applyColor(whiskerColor);
+    parts2.set(root).translate(-0.4, -0.24, 0.175).rotate(90, 1, 0, 0).scale(0.1, 0.015, 0.15);
+    drawCube(parts2);
+
+    parts2.set(root).translate(-0.385, -0.4, 0.175).rotate(90, 1, 0, 0).rotate(20, 0, 1, 0).scale(0.05, 0.015, 0.08);
+    drawCube(parts2);
+
+    // front moustache
+    parts2.set(root).translate(-0.4, -0.24, -0.175).rotate(90, 1, 0, 0).scale(0.1, 0.015, 0.15);
+    drawCube(parts2);
+
+    parts2.set(root).translate(-0.385, -0.4, -0.175).rotate(90, 1, 0, 0).rotate(20, 0, 1, 0).scale(0.05, 0.015, 0.08);
     drawCube(parts2);
 }
 

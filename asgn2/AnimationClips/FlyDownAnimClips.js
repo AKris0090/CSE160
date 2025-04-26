@@ -225,8 +225,8 @@ let backImpact = {
 }
 
 let backResetBody = {
-    time: 0.75,
-    delay: 0.15,
+    time: 0.5,
+    delay: 0.1,
     posX: -2.5,
     rotZ: -40,
     headY: 19.2,
