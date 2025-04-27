@@ -128,10 +128,6 @@ function updateVultureAnimation(vul) {
         if(currentAnim) {
             let elapsed = g_currentTime - g_animStartTime;
 
-            while(currentAnim.fullDelay && elapsed < currentAnim.fullDelay) {
-                break block;
-            }
-
             let duration = currentAnim.time;
             let a = Math.min(1, elapsed / duration);
 
@@ -369,7 +365,7 @@ function renderVulture(vul) {
 
     var m = new Matrix4();
     m.translate(g_X, g_Y, g_Z).rotate(g_angleX, 1, 0, 0).rotate(g_angleY, 0, 1, 0).rotate(g_angleZ, 0, 0, 1);
-
+    initialBonePos.set(m);
     drawBody(m);
 
     // change head direction

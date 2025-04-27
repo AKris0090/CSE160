@@ -43,6 +43,7 @@ let g_ViewProjection = new Matrix4();
 let g_globalRotateMatrix;
 let g_vulture;
 let g_area;
+let g_bone;
 let g_paused = false;
 let g_centeredCamera = true;
 
@@ -51,10 +52,14 @@ let g_time = -1;
 
 let angleX = -40.8;
 let angleY = 7.6;
-let g_Zoom = 30.1;
-let g_lookAtX = -17.25;
-let g_lookAtY = 9;
+// let g_Zoom = 30.1;
+// let g_lookAtX = -17.25;
+// let g_lookAtY = 9;
+// let g_lookAtZ = 0;
+let g_lookAtX = -10;
+let g_lookAtY = 0;
 let g_lookAtZ = 0;
+let g_Zoom = 10;
 
 let upTop = false;
 
@@ -354,10 +359,15 @@ function main() {
   g_ViewProjection.setPerspective(90, canvas.width/canvas.height, 0.1, 1000);
   g_vulture = new Vulture();
   g_area = new Area();
+  g_bone = new Bone();
+
+  g_bone.queuedAnims.push(twist);
+  g_bone.queuedAnims.push(throwUp);
   
   requestAnimationFrame(tick);
 }
 
+let initialBonePos = new Matrix4();
 let g_pauseTime;
 
 function renderAllShapes() {
@@ -389,6 +399,7 @@ function renderAllShapes() {
 
   g_area.render();
   g_vulture.render();
+  g_bone.render(initialBonePos);
 
   sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000/frameTime).toFixed(2));
 
