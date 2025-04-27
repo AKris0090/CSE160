@@ -120,10 +120,6 @@ function updateVultureAnimation(vul) {
         }
     }
 
-    if(g_moving === true && vul.queuedAnims.length === 0) {
-        g_moving = false;
-    }
-
     block: {
         if(currentAnim) {
             let elapsed = g_currentTime - g_animStartTime;
@@ -189,13 +185,13 @@ function updateVultureAnimation(vul) {
             // a = Math.min(1, elapsed / (duration - currentAnim.delay));
             
             // apply all animation transformations
-            currentAnim.posX? g_X = from.posX + lerpVal(0, to.posX, a): null;
-            currentAnim.posY? g_Y = from.posY + lerpVal(0, to.posY, a): null;
-            currentAnim.posZ? g_Z = from.posZ + lerpVal(0, to.posZ, a): null;
+            currentAnim.posX? g_X = from.posX + (to.posX * a): null;
+            currentAnim.posY? g_Y = from.posY + (to.posY * a): null;
+            currentAnim.posZ? g_Z = from.posZ + (to.posZ * a): null;
 
-            currentAnim.rotX? g_angleX = from.rotX + lerpVal(0, to.rotX, a): null;
-            currentAnim.rotY? g_angleY = from.rotY + lerpVal(0, to.rotY, a): null;
-            currentAnim.rotZ? g_angleZ = from.rotZ + lerpVal(0, to.rotZ, a): null;
+            currentAnim.rotX? g_angleX = from.rotX + (to.rotX * a): null;
+            currentAnim.rotY? g_angleY = from.rotY + (to.rotY * a): null;
+            currentAnim.rotZ? g_angleZ = from.rotZ + (to.rotZ * a): null;
 
             currentAnim.headX? g_headX = lerpVal(from.headX, to.headX, a): null;
             currentAnim.headY? g_headY = lerpVal(from.headY, to.headY, a): null;
@@ -217,6 +213,8 @@ function updateVultureAnimation(vul) {
             currentAnim.leftFoot? g_leftFootAngle = lerpVal(from.leftFoot, to.leftFoot, a): null;
 
             currentAnim.tailAngle? g_tailAngle = lerpVal(from.tailAngle, to.tailAngle, a): null;
+            
+            currentAnim.bottomBeak? g_bottomBeakAngle = lerpVal(from.bottomBeak, to.bottomBeak, a): null;
 
             currentAnim.leftToeAngle? g_leftToeAngle = lerpVal(from.leftToeAngle, to.leftToeAngle, a): null;
             currentAnim.rightToeAngle? g_rightToeAngle = lerpVal(from.rightToeAngle, to.rightToeAngle, a): null;
@@ -227,6 +225,9 @@ function updateVultureAnimation(vul) {
 
             if(a >= 1) {
                 currentAnim = null;
+                if(g_moving === true && vul.queuedAnims.length === 0) {
+                    g_moving = false;
+                }
             }
         } 
     }
@@ -348,6 +349,8 @@ function getCurrentPose() {
 
         tailAngle: g_tailAngle,
 
+        bottomBeak: g_bottomBeakAngle,
+
         leftToeAngle: g_leftToeAngle,
         rightToeAngle: g_rightToeAngle,
     };
@@ -365,7 +368,6 @@ function renderVulture(vul) {
 
     var m = new Matrix4();
     m.translate(g_X, g_Y, g_Z).rotate(g_angleX, 1, 0, 0).rotate(g_angleY, 0, 1, 0).rotate(g_angleZ, 0, 0, 1);
-    initialBonePos.set(m);
     drawBody(m);
 
     // change head direction
@@ -816,7 +818,7 @@ function drawHead(root) {
 
     // bottom head
     head.set(root)
-    head.translate(-3.256, 3.07, 0).rotate(g_headZ, 1, 0, 0).rotate(g_headX, 0, 1, 0).rotate(g_headY + g_topBeakAngle, 0, 0, 1);
+    head.translate(-3.256, 3.07, 0).rotate(g_headZ, 1, 0, 0).rotate(g_headX, 0, 1, 0).rotate(g_headY + g_topBeakAngle - g_bottomBeakAngle, 0, 0, 1);
     head.scale(-1, 1, 1);
     head.translate(-0.75, 0, 0);
     drawBottomBeak(head);
@@ -845,7 +847,7 @@ function drawTopBeak(root) {
 let beak2 = new Matrix4();
 function drawBottomBeak(root) {
     beak2.set(root);
-    beak2.translate(-.5, 0, 0).rotate(g_bottomBeakAngle, 0, 0, 1).translate(-.51, -0.18, 0);
+    beak2.translate(-.5, 0, 0).translate(-.51, -0.18, 0);
     drawBottomBeakParts(beak2);
     applyColor(thighColor);
     beak2.scale(0.525, 0.076, 0.075);

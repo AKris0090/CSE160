@@ -321,6 +321,51 @@ function main() {
     g_lastX = ev.x;
     g_lastY = ev.y;
 
+    if(ev.buttons == 1 && ev.shiftKey) {
+      if(!upTop && !g_moving && !g_boneMoving) {
+        g_moving = true;
+        g_boneMoving = true;
+
+        g_boneX = -8;
+        g_boneY = -2;
+        g_boneZ = 0;
+        g_boneAngleX = 180;
+        g_boneAngleY = 0;
+        g_boneAngleZ = 0;
+
+        g_vulture.queuedAnims.push(resetBone);
+        g_vulture.queuedAnims.push(tiltDown);
+        g_vulture.queuedAnims.push(tiltUp);
+      
+        g_vulture.queuedAnims.push(pause);
+        g_vulture.queuedAnims.push(tiltDown);
+        g_vulture.queuedAnims.push(tiltUp);
+      
+        g_vulture.queuedAnims.push(pause);
+        g_vulture.queuedAnims.push(tiltDown);
+        g_vulture.queuedAnims.push(tiltUp);
+      
+        g_vulture.queuedAnims.push(pickup);
+        g_vulture.queuedAnims.push(pause);
+        g_vulture.queuedAnims.push(bendForPickup);
+      
+        g_bone.queuedAnims.push(bonePause);
+        g_bone.queuedAnims.push(down3);
+        g_bone.queuedAnims.push(up3);
+      
+        g_bone.queuedAnims.push(bonePause);
+        g_bone.queuedAnims.push(down2);
+        g_bone.queuedAnims.push(up2);
+      
+        g_bone.queuedAnims.push(bonePause);
+        g_bone.queuedAnims.push(down);
+        g_bone.queuedAnims.push(up);
+        
+        g_bone.queuedAnims.push(throwUp);
+        g_bone.queuedAnims.push(delay);
+      }
+    } 
+
     if(ev.buttons == 2 && g_moving === false) {
       if(upTop) {
         g_moving = true;
@@ -360,14 +405,10 @@ function main() {
   g_vulture = new Vulture();
   g_area = new Area();
   g_bone = new Bone();
-
-  g_bone.queuedAnims.push(twist);
-  g_bone.queuedAnims.push(throwUp);
   
   requestAnimationFrame(tick);
 }
 
-let initialBonePos = new Matrix4();
 let g_pauseTime;
 
 function renderAllShapes() {
@@ -399,7 +440,9 @@ function renderAllShapes() {
 
   g_area.render();
   g_vulture.render();
-  g_bone.render(initialBonePos);
+  if(g_boneMoving) {
+    g_bone.render();
+  }
 
   sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000/frameTime).toFixed(2));
 

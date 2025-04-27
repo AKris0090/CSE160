@@ -29,8 +29,8 @@ let startReturn = {
 
 let jumpReturn = {
     time: 0.48,
-    delay: 0.2,
-    posX: 1,
+    delay: 0,
+    posX: 3,
     posY: 2,
     rotZ: -20,
     rightLegX: -80,
@@ -71,8 +71,8 @@ let jumpReturn = {
 let backRotate = {
     time: 0.3333,
     delay: 0,
-    posX: 5,
-    posY: -2,
+    posX: 7.5,
+    posY: -3,
     rotZ: -32,
     headY: -19.2,
     rightLegX: -110,
@@ -112,8 +112,8 @@ let backRotate = {
 let backFlapping = {
     time: 0.25,
     delay: 0,
-    posX: 3,
-    posY: -2.5,
+    posX: 7,
+    posY: -4.5,
     wingAngle: {
         enabled: false,
         func: "sine",
@@ -145,9 +145,9 @@ let backFlapping = {
 let backBuffer1 = {
     time: 0.25,
     delay: 0,
-    posX: 2.5,
+    posX: 8,
     rotZ: 10,
-    posY: -4,
+    posY: -7,
     wingAngle: {
         enabled: false,
         func: "sine",
@@ -179,8 +179,8 @@ let backBuffer1 = {
 let backLand = {
     time: 0.25,
     delay: 0,
-    posX: 4.5,
-    posY: -3.5,
+    posX: 6.75,
+    posY: -5.5,
     wingAngle: {
         enabled: false,
         position: 25,
@@ -200,7 +200,7 @@ let backLand = {
 let backImpact = {
     time: 0.5,
     delay: 0,
-    posX: 2.5,
+    posX: 3.75,
     rotZ: 42,
     headY: -15,
     rightLegX: -50,
@@ -228,7 +228,7 @@ let backImpact = {
 
 let backResetBody = {
     time: 0.5,
-    delay: 0.1,
+    delay: 0,
     posX: -2.5,
     rotZ: -40,
     headY: -19.2,
