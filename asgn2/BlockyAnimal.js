@@ -56,8 +56,8 @@ let angleY = 7.6;
 // let g_lookAtX = -17.25;
 // let g_lookAtY = 9;
 // let g_lookAtZ = 0;
-let g_lookAtX = -10;
-let g_lookAtY = 0;
+let g_lookAtX = -20;
+let g_lookAtY = 6;
 let g_lookAtZ = 0;
 let g_Zoom = 10;
 

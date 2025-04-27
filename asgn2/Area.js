@@ -13,8 +13,7 @@ class Area {
         this.newM.set(this.matrix).translate(-1.5, -3, -1.5).scale(2, 1, 2);
         drawCube(this.newM);
         this.newM.set(this.matrix);
-        this.newM.translate(-7.25, 0, -7.25).scale(2, 3, 2);
+        this.newM.translate(-13.25, 0, -13.25).scale(2, 7, 2);
         drawCube(this.newM);
-        //drawIcoSphere(this.newM);
     }
 }
