@@ -157,7 +157,7 @@ let reset2 = {
     leftShinX: 0.01,
     leftFoot: 0.01,
     rightFoot: 0.01,
-    tailAngle: 0,
+    tailAngle: 0.01,
     wingAngle: {
         position: 70,
         enabled: false
