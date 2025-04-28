@@ -140,16 +140,16 @@ function addActionsForHtmlUI() {
   document.getElementById('headYSlider')?.addEventListener('mousemove', function() { g_headY = this.value; });
 
   document.getElementById('rightLegXSlider').addEventListener('mousemove', function() { g_rightLegXAngle = this.value; });
-  document.getElementById('rightLegYSlider').addEventListener('mousemove', function() { g_rightLegYAngle = this.value; });
+  document.getElementById('rightLegYSlider')?.addEventListener('mousemove', function() { g_rightLegYAngle = this.value; });
   document.getElementById('rightShinXSlider').addEventListener('mousemove', function() { g_rightShinXAngle = this.value; });
-  document.getElementById('rightFootAngle').addEventListener('mousemove', function() { g_rightFootAngle = this.value; });
-  document.getElementById('rightToeSlider').addEventListener('mousemove', function() { g_rightToeAngle = this.value; });
+  document.getElementById('leftFootAngle').addEventListener('mousemove', function() { g_rightFootAngle = this.value; });
+  document.getElementById('leftToeSlider').addEventListener('mousemove', function() { g_rightToeAngle = this.value; });
 
   document.getElementById('leftLegXSlider').addEventListener('mousemove', function() { g_leftLegXAngle = this.value; });
-  document.getElementById('leftLegYSlider').addEventListener('mousemove', function() { g_leftLegYAngle = this.value; });
+  document.getElementById('leftLegYSlider')?.addEventListener('mousemove', function() { g_leftLegYAngle = this.value; });
   document.getElementById('leftShinXSlider').addEventListener('mousemove', function() { g_leftShinXAngle = this.value; });
-  document.getElementById('leftFootAngle').addEventListener('mousemove', function() { g_leftFootAngle = this.value; });
-  document.getElementById('leftToeSlider').addEventListener('mousemove', function() { g_leftToeAngle = this.value; });
+  document.getElementById('rightFootAngle').addEventListener('mousemove', function() { g_leftFootAngle = this.value; });
+  document.getElementById('rightToeSlider').addEventListener('mousemove', function() { g_leftToeAngle = this.value; });
 
   document.getElementById('pauseButton').onclick = function() { g_paused = true; };
   document.getElementById('resumeButton').onclick = function() { g_paused = false; };
