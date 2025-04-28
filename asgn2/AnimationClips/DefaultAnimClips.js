@@ -1,5 +1,4 @@
-// TODO: add an animation to pick up and eat the bone
-
+// Animation keyframes for default idle animation
 let startFlapping = {
     time: 2.15,
     delay: 0,

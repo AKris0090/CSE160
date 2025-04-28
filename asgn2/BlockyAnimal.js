@@ -1,5 +1,12 @@
 // Credits to Zachary Messer's project for some major inspiration, especially with the idea of using perspective for the camera and adding a little bit of normal-based lighting
 // Perspective code is already in cuon-matrix-cse160.js anyway, so I just used those functions/matrices.
+
+// Arjun Krishnan
+//akrish29@ucsc.edu
+
+//Notes to Grader:
+//My submission's special features are notes in the <p> and <li> tags below the canvas. I hope you enjoy my project!
+
 var VSHADER_SOURCE =
   `attribute vec4 a_Position;
   attribute vec4 a_Normal;
@@ -119,7 +126,6 @@ function addActionsForHtmlUI() {
   document.getElementById('wingFrontBackSlider').addEventListener('mousemove', function() { g_wingFrontBackAngle = this.value; });
   document.getElementById('tailSlider').addEventListener('mousemove', function() { g_tailAngle = this.value; });
 
-  document.getElementById('topBeakSlider').addEventListener('mousemove', function() { g_topBeakAngle = this.value; });
   document.getElementById('bottomBeakSlider').addEventListener('mousemove', function() { g_bottomBeakAngle = this.value; });
 
   document.getElementById('bodyAngleXSlider')?.addEventListener('mousemove', function() { g_xWing = this.value; });

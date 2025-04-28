@@ -16,7 +16,5 @@ class Area {
         this.newM.translate(-13.25, 0, -13.25).scale(2, 7, 2);
         drawCube(this.newM);
         applyColor([98/255,188/255,47/255, 1.0]);
-        // this.newM.set(this.matrix).translate(0, -5, 0).scale(25, 0.25, 25);
-        // drawCube(this.newM);
     }
 }

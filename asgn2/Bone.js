@@ -1,4 +1,3 @@
-// TODO: add a way to draw the bone
 let boneColor = [164/255, 90/255, 82/255, 1.0];
 let topBoneColor = [0.988, 0.882, 0.69, 1.0];
 
@@ -28,6 +27,7 @@ function getTransform() {
     }
 }
 
+// mini version of vulture animation system
 function updateBoneAnimation(bone) {
     if (!g_currentBoneAnim && bone.queuedAnims && bone.queuedAnims.length > 0) {
         g_currentBoneAnim = bone.queuedAnims.pop();

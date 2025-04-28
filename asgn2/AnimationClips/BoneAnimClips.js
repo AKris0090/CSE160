@@ -1,5 +1,4 @@
-// TODO: add keyframes that match up to the bird eating the bone
-
+// Bone object animation keyframes and vulture keyframes for eating animation
 // bone
 let delay = {
     time: 1.65,

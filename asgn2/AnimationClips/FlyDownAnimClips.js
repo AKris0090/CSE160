@@ -1,3 +1,4 @@
+// Animation keyframes for flying from up to down
 let startReturn = {
     time: 0.65,
     delay: 0,

@@ -27,6 +27,7 @@ function applyColor(rgba) {
     gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
+// Smoothing from one wing wave speed to another
 function wingSmoothing(elapsed, o, from) {
     let a = Math.min(elapsed / g_catchupTime, 1);
     if(!o.func) {
@@ -46,6 +47,8 @@ let g_waitFlapLimit = 23;
 let g_headPosStartTime = 0;
 let g_waitHeadPos = 0;
 
+// Chosing random head X Y and Z within constraints, reset timer, and wait till timer expires agaiin
+// All random based
 function choseRandomHeadPos(vul) {
     let elapsedFlap = g_currentTime - g_waitFlapStart;
     if(elapsedFlap > 30) {
@@ -82,6 +85,7 @@ function choseRandomHeadPos(vul) {
     }
 }
 
+// When animation sequences happen, g_moving is set to true, so when not moving, just continue with idle stuff
 function updateVultureAnimation(vul) {
     if(g_waitFlapStart == null) {
         g_waitFlapStart = g_currentTime;
@@ -103,6 +107,7 @@ function updateVultureAnimation(vul) {
             g_wingNeedCatchup = false;
         }
 
+        // Keeping wing motion throughout keyframes
         if(currentAnim.keepWing && g_keepWings === false) {
             g_keepWings = true;
             g_previousWingO = currentAnim.wingAngle;
@@ -140,6 +145,7 @@ function updateVultureAnimation(vul) {
                     break wing;
                 }
 
+                // Wing animation lerping
                 if(currentAnim.wingAngle.enabled && currentAnim.wingAngle.enabled === true) {
                     let g_previousO = currentAnim.wingAngle;
                     if(g_previousO.func === 'sine') {
@@ -180,11 +186,8 @@ function updateVultureAnimation(vul) {
                     currentAnim.wingFrontAngle.position? g_leftRightWing = lerpVal(from.wingFrontAngle.position, to.wingFrontAngle.position, a): null;
                 }
             }
-
-            // elapsed -= currentAnim.delay;
-            // a = Math.min(1, elapsed / (duration - currentAnim.delay));
             
-            // apply all animation transformations
+            // lerp all other animation transformations
             currentAnim.posX? g_X = from.posX + (to.posX * a): null;
             currentAnim.posY? g_Y = from.posY + (to.posY * a): null;
             currentAnim.posZ? g_Z = from.posZ + (to.posZ * a): null;
@@ -306,6 +309,8 @@ let g_handXAngle = 0;
 let g_handYAngle = 0;
 let g_handZAngle = 0;
 
+// used to get the current position for lerping purposes
+// keep in mind - pos x pos y pos z angle x angle y angle z are all relative (delta transforms)
 function getCurrentPose() {
     return {
         posX: g_X,
@@ -373,7 +378,9 @@ function renderVulture(vul) {
     // change head direction
     drawHead(m);
 
+    // draw left wing
     drawWing(m, 1);
+    // draw right wing
     drawWing(m, -1);
 
     drawLeg(m, 0);
@@ -687,9 +694,6 @@ let g_zWing = 73;
 
 let wrist = new Matrix4();
 function drawWrist(root) {
-    // wrist.set(root).translate(0, 0, 3).rotate((2 * g_leftWingAngle + 30), 0, 1, 0).rotate((0.4167 * g_leftWingAngle - 3.333), 1, 0, 0).rotate(0.85 * g_leftWingAngle, 0, 0, 1).scale(0.185, 0.185, 0.26);
-    //wrist.set(root).translate(0, 0, 3).rotate(g_yWing, 0, 1, 0).rotate(g_xWing, 1, 0, 0).rotate(g_zWing, 0, 0, 1).scale(0.185, 0.185, 0.26);
-
     wrist.set(root).translate(0, 0, 3).rotate(2 * g_leftWingAngle + 30, 0, 1, 0).rotate(0.333 * g_leftWingAngle -3.333, 1, 0, 0).rotate(1.042 * g_leftWingAngle, 0, 0, 1).scale(0.185, 0.185, 0.26);
 
     drawHand(wrist);
@@ -897,34 +901,9 @@ function drawTopBeakParts(root) {
     drawCube(parts2);
 }
 
-// helper functions
+// math helper functions
 function lerpVal(a, b, t) {
     return a * (1-t) + b * t;
-}
-
-function lerp(a, b, t) {
-    return (b - a) * t + a;
-}
-
-function lerpVector(a, b, t) {
-    let ret = new Vector3();
-    ret.elements[0] = lerp(a.elements[0], b.elements[0], t);
-    ret.elements[1] = lerp(a.elements[1], b.elements[1], t);
-    ret.elements[2] = lerp(a.elements[2], b.elements[2], t);
-    return ret;
-}
-
-function easeOutLerp(a, b, t) {
-    if (t === 0) return a;
-    if (t === 1) return b;
-  
-    if (t < 0.5) {
-      t = Math.pow(1.5, 20 * t - 10) / 2;
-    } else {
-      t = t;
-    }
-  
-    return a + (b - a) * t;
 }
 
 function getPhaseCorrectedSine(t, o) {

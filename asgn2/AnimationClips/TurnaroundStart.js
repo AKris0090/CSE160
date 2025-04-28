@@ -1,3 +1,4 @@
+// Turnaround animation for after returning to the bottom platform
 let startTurn2 = {
     time: 0.65,
     delay: 0,

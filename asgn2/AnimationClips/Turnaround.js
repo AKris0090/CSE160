@@ -1,3 +1,4 @@
+// Turnaround animation for the top of the pillar
 let startTurn = {
     time: 0.65,
     delay: 0,

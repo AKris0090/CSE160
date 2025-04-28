@@ -56,7 +56,7 @@ let cubeArray = [ // first cube is blender cube, from -1 to 1 with each edge len
     0, 0, 0,   0.71, 0, -0.71,   0, 0, -1, 
     0, 0, 0,   1, 0, 0,   0.71, 0, -0.71, 
     0, 0, 0,   0.71, 0, 0.71,   1, 0, 0,
-    0, 1, 0,   1, 1, 0,         0.71, 1, 0.71
+    0, 1, 0,   1, 1, 0,         0.71, 1, 0.71 // 8-segmented cylinder
 ];
 
 let cubeVertices = null;
