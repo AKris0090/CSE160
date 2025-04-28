@@ -161,6 +161,25 @@ let tiltDown = {
 }
 
 let pause = {
+    time: 0.5,
+    delay: 0,
+    wingAngle: {
+        enabled: false,
+        position: 70,
+    },
+    wingUpAngle: {
+        enabled: false,
+        position: 0,
+    },
+    wingFrontAngle: {
+        enabled: false,
+        position: -40,
+    },
+    keepWing: false,
+    needCatch: false
+}
+
+let secondPause = {
     time: 1,
     delay: 0,
     wingAngle: {

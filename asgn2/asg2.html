@@ -10,7 +10,7 @@ my submission's special features are notes in the <p> tags below the canvas. I h
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Drawing Application</title>
+    <title>Bearded Vulture</title>
   </head>
 
   <body onload="main()" style="color: white; background-color: black;">
@@ -39,6 +39,7 @@ my submission's special features are notes in the <p> tags below the canvas. I h
     <p></p>
     Head Angle X: <input type="range" id="headSlider" min="135" max="225" step="1" value="180"/>
     Head Angle Y: <input type="range" id="headYSlider" min="-25" max="19.2" step="1" value="-2"/> -->
+
     <p></p>
     Wing Stretch: <input type="range" id="wingSlider" min="0" max="70" step="1" value="70"/>
     Wing Pitch: <input type="range" id="wingFrontBackSlider" min="-50" max="50" step="1" value="0"/>
@@ -62,6 +63,22 @@ my submission's special features are notes in the <p> tags below the canvas. I h
     Left Shin Angle X: <input type="range" id="leftShinXSlider" min="-90" max="90" step="1" value="0"/>
     Left Foot Angle: <input type="range" id="leftFootAngle" min="-50" max="50" step="1" value="0"/>
     Left Toe Angle: <input type="range" id="leftToeSlider" min="-1.5" max="20" step="1" value="0"/>
+
+    <p></p>
+    NOTES FOR GRADER:
+
+    <li>Every part of the bird is animated, and the wing motion is anatomically correct</li>
+    <li>Shift Click: Feed the vulture. Only works when on the ground. The bearded vulture's diet consists of 80% bones</li>
+    <li>Right Click: Fly up to a tall pillar. Fly back down, as well</li>
+    <li>Left Click and Drag: Rotate camera</li>
+    <li>Scroll Wheel: Zoom in/out</li>
+    <li>The meat on the bone is made up of non-cube primitives. Three icospheres and a cylinder.</li>
+
+    <p></p>
+    Bearded vultures are one of the coolest birds in the animal kingdom.
+
+    I studied bird anatomy, watched countless videos, just to make sure I got everything as physically accurate to a real vulture.
+    I setup a keyframing/animation system for the bird, allowing me to create animation clips and string them together into complete animation sequences.
 
     <script src="../lib/webgl-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>

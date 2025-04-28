@@ -1,6 +1,5 @@
-// Credits to Zachary Messer's project for some major inspiration, especially with the idea of using perspective for the camera and adding a little bit of lighting
-
-// 
+// Credits to Zachary Messer's project for some major inspiration, especially with the idea of using perspective for the camera and adding a little bit of normal-based lighting
+// Perspective code is already in cuon-matrix-cse160.js anyway, so I just used those functions/matrices.
 var VSHADER_SOURCE =
   `attribute vec4 a_Position;
   attribute vec4 a_Normal;
@@ -10,26 +9,25 @@ var VSHADER_SOURCE =
   varying vec3 v_normalOut;
 
   void main() {
-    v_normalOut = mat3(u_GlobalRotateMatrix * u_ModelMatrix) * a_Normal.xyz;
+    v_normalOut = mat3(u_ModelMatrix) * a_Normal.xyz;
     gl_Position = u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
-
   }`
 
-// Fragment shader program
 var FSHADER_SOURCE =
   `precision mediump float;
-  const vec3 u_lightPos = normalize(vec3(5, -15, 15));
+  const vec3 u_lightPos = normalize(vec3(10, -30, -25));
 
   varying mediump vec3 v_normalOut;
   uniform vec4 u_FragColor;
 
   void main() {
-    mediump float nDotL = max(0.5, dot(normalize(v_normalOut), u_lightPos.xyz));
+    mediump float nDotL = max(0.4, dot(normalize(v_normalOut.xyz), u_lightPos.xyz));
     gl_FragColor = vec4(u_FragColor.xyz * vec3(nDotL), 1.0);
   }`
 
 let canvas;
 let gl;
+
 let a_Position;
 let a_Normal;
 let u_FragColor;
@@ -45,21 +43,17 @@ let g_vulture;
 let g_area;
 let g_bone;
 let g_paused = false;
-let g_centeredCamera = true;
+let g_centeredCamera = false;
 
 let g_currentTime = -1;
 let g_time = -1;
 
-let angleX = -40.8;
-let angleY = 7.6;
-// let g_Zoom = 30.1;
-// let g_lookAtX = -17.25;
-// let g_lookAtY = 9;
-// let g_lookAtZ = 0;
+let angleX = 55.8;
+let angleY = 13.8;
 let g_lookAtX = -20;
 let g_lookAtY = 6;
 let g_lookAtZ = 0;
-let g_Zoom = 10;
+let g_Zoom = 7.33;
 
 let upTop = false;
 
@@ -262,7 +256,9 @@ function createAttachCubeVertexBuffer() {
   gl.enableVertexAttribArray(a_Normal);
 }
 
+// animations are queued in reverse, since the current animation is popped off the back
 function flyUp() {
+  // turnaround at top
   g_vulture.queuedAnims.push(reset);
   g_vulture.queuedAnims.push(landTurn);
   g_vulture.queuedAnims.push(threeFourthsBuffer);
@@ -305,6 +301,39 @@ function flyDown() {
   upTop = false;
 }
 
+function boneAnim() {
+  g_vulture.queuedAnims.push(resetBone);
+  g_vulture.queuedAnims.push(tiltDown);
+  g_vulture.queuedAnims.push(tiltUp);
+
+  g_vulture.queuedAnims.push(secondPause);
+  g_vulture.queuedAnims.push(tiltDown);
+  g_vulture.queuedAnims.push(tiltUp);
+
+  g_vulture.queuedAnims.push(secondPause);
+  g_vulture.queuedAnims.push(tiltDown);
+  g_vulture.queuedAnims.push(tiltUp);
+
+  g_vulture.queuedAnims.push(pickup);
+  g_vulture.queuedAnims.push(secondPause);
+  g_vulture.queuedAnims.push(bendForPickup);
+
+  g_bone.queuedAnims.push(bonePause);
+  g_bone.queuedAnims.push(down3);
+  g_bone.queuedAnims.push(up3);
+
+  g_bone.queuedAnims.push(bonePause);
+  g_bone.queuedAnims.push(down2);
+  g_bone.queuedAnims.push(up2);
+
+  g_bone.queuedAnims.push(bonePause);
+  g_bone.queuedAnims.push(down);
+  g_bone.queuedAnims.push(up);
+  
+  g_bone.queuedAnims.push(throwUp);
+  g_bone.queuedAnims.push(delay);
+}
+
 function main() {
   setupWebGL();
   connectVariablesToGLSL();
@@ -333,36 +362,7 @@ function main() {
         g_boneAngleY = 0;
         g_boneAngleZ = 0;
 
-        g_vulture.queuedAnims.push(resetBone);
-        g_vulture.queuedAnims.push(tiltDown);
-        g_vulture.queuedAnims.push(tiltUp);
-      
-        g_vulture.queuedAnims.push(pause);
-        g_vulture.queuedAnims.push(tiltDown);
-        g_vulture.queuedAnims.push(tiltUp);
-      
-        g_vulture.queuedAnims.push(pause);
-        g_vulture.queuedAnims.push(tiltDown);
-        g_vulture.queuedAnims.push(tiltUp);
-      
-        g_vulture.queuedAnims.push(pickup);
-        g_vulture.queuedAnims.push(pause);
-        g_vulture.queuedAnims.push(bendForPickup);
-      
-        g_bone.queuedAnims.push(bonePause);
-        g_bone.queuedAnims.push(down3);
-        g_bone.queuedAnims.push(up3);
-      
-        g_bone.queuedAnims.push(bonePause);
-        g_bone.queuedAnims.push(down2);
-        g_bone.queuedAnims.push(up2);
-      
-        g_bone.queuedAnims.push(bonePause);
-        g_bone.queuedAnims.push(down);
-        g_bone.queuedAnims.push(up);
-        
-        g_bone.queuedAnims.push(throwUp);
-        g_bone.queuedAnims.push(delay);
+        boneAnim();
       }
     } 
 
@@ -397,10 +397,12 @@ function main() {
   })
   
 
-  // Specify the color for clearing <canvas>
+  // // Specify the color for clearing <canvas>
+  // gl.clearColor(150/255,226/255,238/255, 1.0);
   gl.clearColor(0, 0, 0, 1.0);
 
   g_globalRotateMatrix = new Matrix4();
+  // perspective matrix using cuon-matrix lib
   g_ViewProjection.setPerspective(90, canvas.width/canvas.height, 0.1, 1000);
   g_vulture = new Vulture();
   g_area = new Area();
@@ -425,13 +427,15 @@ function renderAllShapes() {
   // https://stackoverflow.com/questions/21603412/algorithm-3d-orbiting-camera-control-with-mouse-drag
   
   var cameraMatrix = new Matrix4();
+  // view matrix using xy angle and zoom
   cameraMatrix.translate(0, 0, -g_Zoom).rotate(angleY, 1, 0, 0).rotate(angleX, 0, 1, 0)
   if(g_centeredCamera) {
     cameraMatrix.translate(-g_lookAtX, -g_lookAtY, -g_lookAtZ);
   } else {
-    cameraMatrix.translate(-g_X, -g_Y, -g_Z);
+    cameraMatrix.translate(-g_X + 2.5, -g_Y, -g_Z);
   }
 
+  // get vp matrix by multiplying them, and multiply by model in shader
   var finalMat = new Matrix4().set(g_ViewProjection);
   finalMat.multiply(cameraMatrix);
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, finalMat.elements);

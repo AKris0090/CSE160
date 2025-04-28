@@ -786,7 +786,7 @@ function drawBody(root) {
 let head = new Matrix4();
 function drawHead(root) {
     head.set(root)
-    head.translate(-3.256, 3.07, 0).rotate(g_headZ, 1, 0, 0).rotate(g_headX, 0, 1, 0).rotate(g_headY + g_topBeakAngle, 0, 0, 1);
+    head.translate(-3.256, 3.07, 0).rotate(g_headZ, 1, 0, 0).rotate(g_headX, 0, 1, 0).rotate(g_headY, 0, 0, 1);
     head.scale(-1, 1, 0.75);
     head.translate(-0.75, 0, 0);
     drawTopBeak(head);
