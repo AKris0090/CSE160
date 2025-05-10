@@ -10,21 +10,30 @@ var VSHADER_SOURCE =
   attribute vec4 a_Position;
   attribute vec2 a_UV;
   varying vec2 v_UV;
+  varying vec3 v_Position;
+  uniform float u_textureIndex;
   uniform mat4 u_ModelMatrix;
   uniform mat4 u_ViewMatrix;
   uniform mat4 u_ProjectionMatrix;
 
   void main() {
     v_UV = a_UV;
-    gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
+    v_Position = a_Position.xyz;
+    if(u_textureIndex < 2.0) {
+      gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
+    } else {
+      gl_Position = u_ProjectionMatrix * mat4(mat3(u_ViewMatrix)) * u_ModelMatrix * a_Position;
+    }
   }`
 
 var FSHADER_SOURCE =
   `precision mediump float;
   varying vec2 v_UV;
+  varying vec3 v_Position;
   uniform vec4 u_FragColor;
   uniform float u_textureIndex;
   uniform sampler2D u_Sampler0;
+  uniform samplerCube u_CubeMap;
 
   void main() {
     if(u_textureIndex == 0.0) {
@@ -32,6 +41,9 @@ var FSHADER_SOURCE =
     }
     if(u_textureIndex == 1.0) {
       gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz, 1.0);
+    }
+    if(u_textureIndex == 2.0) {
+      gl_FragColor = textureCube(u_CubeMap, normalize(v_Position));
     }
   }`
 
@@ -157,6 +169,42 @@ function initTextures(gl, n) {
   return true;
 }
 
+// https://webglfundamentals.org/webgl/lessons/webgl-environment-maps.html
+function initCubeMap(gl) {
+  const cubeMap = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+  const faces = [
+      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_X, url: 'skybox/right.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X, url: 'skybox/left.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y, url: 'skybox/top.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, url: 'skybox/bottom.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, url: 'skybox/front.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z, url: 'skybox/back.jpg' },
+  ];
+
+  let loadedImages = 0;
+
+  faces.forEach((face) => {
+      const { target, url } = face;
+      const image = new Image();
+      image.onload = () => {
+          gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+          gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+          loadedImages++;
+          if (loadedImages === 6) {
+              gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+              gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+          }
+      };
+      image.src = url;
+  });
+
+  const u_CubeMap = gl.getUniformLocation(gl.program, 'u_CubeMap');
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+  gl.uniform1i(u_CubeMap, 1);
+}
+
 function createAttachCubeVertexBuffer() {
   // Create a buffer object
   var vertexBuffer = gl.createBuffer();
@@ -186,31 +234,22 @@ function createAttachCubeVertexBuffer() {
   gl.enableVertexAttribArray(a_UV);
 }
 
-function keyDown(ev) {
-  if(ev.keyCode == 87) {
-    // move forward
-    g_cam.moveForward();
-  }
-  if(ev.keyCode == 65) {
-    // move left
-    g_cam.moveLeft();
-  }
-  if(ev.keyCode == 83) {
-    // move back
-    g_cam.moveBack();
-  }
-  if(ev.keyCode == 68) {
-    // move right
-    g_cam.moveRight();
-  }
-  if(ev.keyCode == 81) {
-    // turn left
-    g_cam.panLeft();
-  }
-  if(ev.keyCode == 69) {
-    // turn right
-    g_cam.panRight();
-  }
+let g_keysPressed = {};
+
+function handleKeys() {
+  if (g_keysPressed["w"]) g_cam.moveForward();
+  if (g_keysPressed["a"]) g_cam.moveLeft();
+  if (g_keysPressed["s"]) g_cam.moveBack();
+  if (g_keysPressed["d"]) g_cam.moveRight();
+  if (g_keysPressed["q"]) g_cam.panLeft();
+  if (g_keysPressed["e"]) g_cam.panRight();
+}
+
+let scale = 0.2;
+
+function onMouseMove(ev) {
+    g_cam.panRight(-ev.movementX * scale);
+    g_cam.panUp(ev.movementY * scale);
 }
 
 function main() {
@@ -219,52 +258,70 @@ function main() {
   createAttachCubeVertexBuffer();
 
   initTextures(gl, 0);
-
-  canvas.addEventListener('mousedown', function(ev) {
-    g_lastX = ev.x;
-    g_lastY = ev.y;
-  })
-
-  canvas.addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {
-  }});
-
-  document.onkeydown = keyDown;
+  initCubeMap(gl);
   
   gl.clearColor(0, 0, 0, 1.0);
 
   g_Sky = new Cube();
   g_Sky.m_matrix.scale(500, 500, 500);
   g_Ground = new Cube();
-  g_Ground.m_matrix.translate(0, -1, 0).scale(500, 1, 500);
+  g_Ground.m_matrix.translate(0, -2, 0).scale(500, 1, 500);
 
   g_mapObj = new Map();
   g_mapObj.generateMap();
 
   g_cam = new Camera();
+
+  canvas.onclick = function() {
+    canvas.requestPointerLock();
+  };
+
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement === canvas) {
+      document.addEventListener("mousemove", onMouseMove, false);
+    } else {
+      document.removeEventListener("mousemove", onMouseMove, false);
+    }
+  }, false);
+
+  document.addEventListener('keydown', (ev) => {
+    g_keysPressed[ev.key.toLowerCase()] = true;
+
+    if (ev.key === 'z') {
+      g_mapObj.addBlockInFront(g_cam);
+    }
+    if (ev.key === 'x') {
+      g_mapObj.removeBlockInFront(g_cam);
+    }
+  });
+
+  document.addEventListener('keyup', (ev) => {
+    g_keysPressed[ev.key.toLowerCase()] = false;
+  });
   
   requestAnimationFrame(tick);
 }
 
 function renderAllShapes() {
+  handleKeys();
+
   let now = performance.now();
   let nowSeconds = now / 1000;
   g_time = nowSeconds;
   let frameTime = now - g_startTime;
 
   g_cam.updateCamera();
-  // set projection matrix
+
+  // Set projection matrix
   gl.uniformMatrix4fv(u_ProjectionMatrix, false, g_cam.projectionMatrix.elements);
-
-  // set view matrix
-  gl.uniformMatrix4fv(u_ViewMatrix, false, g_cam.viewMatrix.elements);
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  g_Sky.render(1.0);
+  gl.uniformMatrix4fv(u_ViewMatrix, false, g_cam.viewMatrix.elements);
+  g_Sky.render(2.0);
   g_Ground.render(0.0);
   g_mapObj.render();
 
-  sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000/frameTime).toFixed(2));
+  sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000 / frameTime).toFixed(2));
   g_startTime = now;
 }
 
