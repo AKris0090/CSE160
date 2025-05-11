@@ -8,9 +8,11 @@ var VSHADER_SOURCE =
   `
   precision mediump float;
   attribute vec4 a_Position;
+  attribute vec4 a_Normal;
   attribute vec2 a_UV;
   varying vec2 v_UV;
   varying vec3 v_Position;
+  varying vec3 v_normalOut;
   uniform float u_textureIndex;
   uniform mat4 u_ModelMatrix;
   uniform mat4 u_ViewMatrix;
@@ -19,6 +21,7 @@ var VSHADER_SOURCE =
   void main() {
     v_UV = a_UV;
     v_Position = a_Position.xyz;
+    v_normalOut = mat3(u_ModelMatrix) * a_Normal.xyz;
     if(u_textureIndex < 2.0) {
       gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
     } else {
@@ -28,7 +31,11 @@ var VSHADER_SOURCE =
 
 var FSHADER_SOURCE =
   `precision mediump float;
+  const vec3 u_lightPos = normalize(vec3(10, -50, 5));
+  const vec3 tint = vec3(1.0, 0.75, 0.75);
+
   varying vec2 v_UV;
+  varying vec3 v_normalOut;
   varying vec3 v_Position;
   uniform vec4 u_FragColor;
   uniform float u_textureIndex;
@@ -36,11 +43,12 @@ var FSHADER_SOURCE =
   uniform samplerCube u_CubeMap;
 
   void main() {
+    mediump float nDotL = max(0.5, (dot(normalize(v_normalOut.xyz), u_lightPos.xyz) * 1.25));
     if(u_textureIndex == 0.0) {
-      gl_FragColor = u_FragColor;
+      gl_FragColor = vec4(u_FragColor.xyz * vec3(nDotL) * tint, 1.0);;
     }
     if(u_textureIndex == 1.0) {
-      gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz, 1.0);
+      gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz * vec3(nDotL) * tint, 1.0);
     }
     if(u_textureIndex == 2.0) {
       gl_FragColor = textureCube(u_CubeMap, normalize(v_Position));
@@ -94,6 +102,12 @@ function connectVariablesToGLSL() {
     return;
   }
 
+  a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');
+  if(a_Normal < 0) {
+    console.log('Failed to get the storage location of a_Normal');
+    return;
+  }
+
   a_UV = gl.getAttribLocation(gl.program, 'a_UV');
   if(a_UV < 0) {
     console.log('Failed to get the storage location of a_UV');
@@ -134,6 +148,33 @@ function connectVariablesToGLSL() {
     console.log('Failed to get the storage location of u_textureIndex');
     return;
   }
+}
+
+// could not be bothered calculating these myself LOL - math from the textbook on calculating normals of a triangle
+function createCubeNormals() {
+  let out = [];
+  for(var i = 0; i < cubeArray.length; i+= 9) {
+    var vec1 = new Vector3([cubeArray[i], cubeArray[i + 1], cubeArray[i + 2]]);
+    var vec2 = new Vector3([cubeArray[i + 3], cubeArray[i + 4], cubeArray[i + 5]]);
+    var vec3 = new Vector3([cubeArray[i + 6], cubeArray[i + 7], cubeArray[i + 8]]);
+    if(i >= 108) {
+      vec3 = new Vector3([cubeArray[i], cubeArray[i + 1], cubeArray[i + 2]]);
+      vec2 = new Vector3([cubeArray[i + 3], cubeArray[i + 4], cubeArray[i + 5]]);
+      vec1 = new Vector3([cubeArray[i + 6], cubeArray[i + 7], cubeArray[i + 8]]);
+    }
+
+    var cross = Vector3.cross((vec2.sub(vec1)), (vec3.sub(vec1))).normalize();
+    out.push(cross.elements[0]);
+    out.push(cross.elements[1]);
+    out.push(cross.elements[2]);
+    out.push(cross.elements[0]);
+    out.push(cross.elements[1]);
+    out.push(cross.elements[2]);
+    out.push(cross.elements[0]);
+    out.push(cross.elements[1]);
+    out.push(cross.elements[2]);
+  }
+  return out;
 }
 
 function sendTextureToGLSL(gl, n, texture, u_Sampler, image) {
@@ -218,6 +259,12 @@ function createAttachCubeVertexBuffer() {
     console.log("Failed to create the UV buffer object");
     return -1;
   }
+
+  var normalBuffer = gl.createBuffer();
+  if(!normalBuffer) {
+    console.log("Failed to create the normal buffer object");
+    return -1;
+  }
   
   g_obj.startVertex = 36;
   g_obj.numTris = 1660;
@@ -250,6 +297,15 @@ function createAttachCubeVertexBuffer() {
 
   // Enable the assignment to a_UV variable
   gl.enableVertexAttribArray(a_UV);
+
+  let normalsArray = createCubeNormals();
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalsArray), gl.DYNAMIC_DRAW);
+  gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
+
+  // Enable assignment to a_Normal variable;
+  gl.enableVertexAttribArray(a_Normal);
 }
 
 let g_keysPressed = {};
