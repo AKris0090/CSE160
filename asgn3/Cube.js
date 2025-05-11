@@ -30,6 +30,10 @@ const uvMap = [
 
 let cubeVertices = null;
 
+function applyColor(rgba) {
+    gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
+}
+
 class Cube {
     constructor() {
         this.m_matrix = new Matrix4();
@@ -41,12 +45,7 @@ class Cube {
 }
 
 function drawCube(m, textureIndex) {
-    gl.uniform1f(u_textureIndex, textureIndex);
-    gl.uniformMatrix4fv(u_ModelMatrix, false, m.elements);
-    gl.drawArrays(gl.TRIANGLES, 0, 36);
-}
-
-function drawMapCube(m, textureIndex) {
+    applyColor([1, 1, 1, 1]);
     gl.uniform1f(u_textureIndex, textureIndex);
     gl.uniformMatrix4fv(u_ModelMatrix, false, m.elements);
     gl.drawArrays(gl.TRIANGLES, 0, 36);

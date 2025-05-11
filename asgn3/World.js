@@ -64,6 +64,9 @@ let g_Sky = null;
 let g_Ground = null;
 let g_mapObj = null;
 
+let g_obj = null;
+let g_wire = null;
+
 var g_startTime = performance.now() / 1000.0;
 
 function setupWebGL() {
@@ -145,64 +148,60 @@ function sendTextureToGLSL(gl, n, texture, u_Sampler, image) {
 }
 
 function initTextures(gl, n) {
-  var texture = gl.createTexture();
-  if(!texture) {
-    console.log("Failed to create the texture object");
-    return false;
-  }
+  return new Promise((resolve, reject) => {
+    var texture = gl.createTexture();
+    if (!texture) return reject("Failed to create texture object");
 
-  u_Sampler0 = gl.getUniformLocation(gl.program, "u_Sampler0");
-  if(!u_Sampler0) {
-    console.log("Failed to get the storage location of u_Sampler");
-    return false;
-  }
-  
-  var image = new Image();
-  if(!image) {
-    console.log("Failed to create the image object");
-    return false;
-  }
-  image.onload = function() {
-    sendTextureToGLSL(gl, n, texture, u_Sampler0, image);
-  }
-  image.src = "textures/sky.jpg";
-  return true;
+    u_Sampler0 = gl.getUniformLocation(gl.program, "u_Sampler0");
+    if (!u_Sampler0) return reject("Failed to get sampler location");
+
+    var image = new Image();
+    image.onload = function () {
+      sendTextureToGLSL(gl, n, texture, u_Sampler0, image);
+      resolve();
+    };
+    image.onerror = () => reject("Failed to load texture image");
+    image.src = "textures/Plug.png";
+  });
 }
 
 // https://webglfundamentals.org/webgl/lessons/webgl-environment-maps.html
 function initCubeMap(gl) {
-  const cubeMap = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
-  const faces = [
-      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_X, url: 'skybox/right.jpg' },
-      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X, url: 'skybox/left.jpg' },
-      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y, url: 'skybox/top.jpg' },
-      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, url: 'skybox/bottom.jpg' },
-      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, url: 'skybox/front.jpg' },
-      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z, url: 'skybox/back.jpg' },
-  ];
+  return new Promise((resolve, reject) => {
+    const cubeMap = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
 
-  let loadedImages = 0;
+    const faces = [
+      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_X, url: 'skybox2/right.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X, url: 'skybox2/left.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y, url: 'skybox2/top.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, url: 'skybox2/bottom.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, url: 'skybox2/front.jpg' },
+      { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z, url: 'skybox2/back.jpg' },
+    ];
 
-  faces.forEach((face) => {
-      const { target, url } = face;
+    let loadedImages = 0;
+    faces.forEach(({ target, url }) => {
       const image = new Image();
       image.onload = () => {
-          gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
-          gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-          loadedImages++;
-          if (loadedImages === 6) {
-              gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-              gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-          }
-      };
-      image.src = url;
-  });
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+        gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        loadedImages++;
+        if (loadedImages === 6) {
+          gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+          gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 
-  const u_CubeMap = gl.getUniformLocation(gl.program, 'u_CubeMap');
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
-  gl.uniform1i(u_CubeMap, 1);
+          const u_CubeMap = gl.getUniformLocation(gl.program, 'u_CubeMap');
+          gl.activeTexture(gl.TEXTURE1);
+          gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+          gl.uniform1i(u_CubeMap, 1);
+          resolve();
+        }
+      };
+      image.onerror = () => reject(`Failed to load ${url}`);
+      image.src = url;
+    });
+  });
 }
 
 function createAttachCubeVertexBuffer() {
@@ -219,6 +218,24 @@ function createAttachCubeVertexBuffer() {
     return -1;
   }
   
+  g_obj.startVertex = 36;
+  g_obj.numTris = 1660;
+  for(let v of g_obj.vertices) {
+    cubeArray.push(v);
+  }
+  for(let uv of g_obj.uvs) {
+    uvMap.push(uv);
+  }
+
+  g_wire.startVertex = 5016;
+  g_wire.numTris = 124;
+  for(let v of g_wire.vertices) {
+    cubeArray.push(v);
+  }
+  for(let uv of g_wire.uvs) {
+    uvMap.push(uv);
+  }
+
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeArray), gl.DYNAMIC_DRAW);
   gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
@@ -252,18 +269,32 @@ function onMouseMove(ev) {
     g_cam.panUp(ev.movementY * scale);
 }
 
-function main() {
+async function main() {
   setupWebGL();
   connectVariablesToGLSL();
-  createAttachCubeVertexBuffer();
 
-  initTextures(gl, 0);
-  initCubeMap(gl);
+  try {
+    await initTextures(gl, 0);
+    await initCubeMap(gl);
+
+    await new Promise(resolve => {
+      g_obj = new OBJLOADER('objs/plug.obj', resolve);
+    })
+    await new Promise(resolve => {
+        g_wire = new OBJLOADER('objs/wire.obj', resolve);
+    });
+  } catch (e) {
+    console.error("Resource loading failed:", e);
+    return;
+  }
+
+  createAttachCubeVertexBuffer();
   
   gl.clearColor(0, 0, 0, 1.0);
 
   g_Sky = new Cube();
   g_Sky.m_matrix.scale(500, 500, 500);
+
   g_Ground = new Cube();
   g_Ground.m_matrix.translate(0, -2, 0).scale(500, 1, 500);
 
@@ -298,9 +329,12 @@ function main() {
   document.addEventListener('keyup', (ev) => {
     g_keysPressed[ev.key.toLowerCase()] = false;
   });
-  
+
   requestAnimationFrame(tick);
 }
+
+let rotationAngle = 0;
+let g_previousTime;
 
 function renderAllShapes() {
   handleKeys();
@@ -309,6 +343,14 @@ function renderAllShapes() {
   let nowSeconds = now / 1000;
   g_time = nowSeconds;
   let frameTime = now - g_startTime;
+
+  if(g_previousTime) {
+    rotationAngle += (g_time - g_previousTime) * 70;
+    if(rotationAngle > 360) {
+      rotationAngle %= 360;
+    }
+    g_previousTime = g_time;
+  } else g_previousTime = g_time;
 
   g_cam.updateCamera();
 
@@ -320,6 +362,8 @@ function renderAllShapes() {
   g_Sky.render(2.0);
   g_Ground.render(0.0);
   g_mapObj.render();
+  g_obj.render(new Matrix4().translate(0, 5, 0).rotate(rotationAngle, 0, 1, 0).scale(5, 5, 5), 1);
+  g_wire.render(new Matrix4().translate(0, 5, 0).rotate(rotationAngle, 0, 1, 0).scale(5, 5, 5), 0);
 
   sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000 / frameTime).toFixed(2));
   g_startTime = now;
