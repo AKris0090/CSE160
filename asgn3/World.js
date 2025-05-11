@@ -21,7 +21,7 @@ var VSHADER_SOURCE =
   void main() {
     v_UV = a_UV;
     v_Position = a_Position.xyz;
-    v_normalOut = mat3(u_ModelMatrix) * a_Normal.xyz;
+    v_normalOut = normalize(mat3(u_ModelMatrix) * a_Normal.xyz);
     if(u_textureIndex < 2.0) {
       gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
     } else {
@@ -33,25 +33,60 @@ var FSHADER_SOURCE =
   `precision mediump float;
   const vec3 u_lightPos = normalize(vec3(10, -50, 5));
   const vec3 tint = vec3(1.0, 0.75, 0.75);
+  const float PI = 3.1415926;
 
   varying vec2 v_UV;
   varying vec3 v_normalOut;
   varying vec3 v_Position;
   uniform vec4 u_FragColor;
+  uniform vec3 u_camPos;
   uniform float u_textureIndex;
+  uniform float u_isBloomPass;
   uniform sampler2D u_Sampler0;
+  uniform sampler2D u_bloomTexture;
   uniform samplerCube u_CubeMap;
+  const float glow = 2.0;
+
+  float getLightAmount() {
+    vec3 l = normalize(u_lightPos - v_Position);
+    float df = clamp(dot(v_normalOut, l), 0.0, 1.0);
+    return df;
+  }
+
+  vec3 blur(vec4 color) {
+    vec3 result = vec3(0.0);
+    for (int i = -glow; i <= glow; i++) {
+        result += texture(u_bloomTexture, v_UV + vec2(i * offset, 0)).rgb;
+    }
+    return result;
+  }
 
   void main() {
-    mediump float nDotL = max(0.5, (dot(normalize(v_normalOut.xyz), u_lightPos.xyz) * 1.25));
+    if(u_isBloomPass == 1.0) {
+      mediump float nDotL = max(0.5, (dot(normalize(v_normalOut.xyz), u_lightPos.xyz) * 1.25));
+      vec3 color = texture2D(u_Sampler0, v_UV).xyz * vec3(nDotL) * tint;
+      float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+      gl_FragColor = brightness > 1.0 ? vec4(color, 1.0) : vec4(vec3(0.0), 1.0);
+      return;
+    }
+
+    //mediump float nDotL = max(0.5, (dot(normalize(v_normalOut.xyz), u_lightPos.xyz) * 1.25));
+    
+    mediump float nDotL = dot(normalize(v_normalOut.xyz), u_lightPos.xyz);
     if(u_textureIndex == 0.0) {
       gl_FragColor = vec4(u_FragColor.xyz * vec3(nDotL) * tint, 1.0);;
     }
     if(u_textureIndex == 1.0) {
-      gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz * vec3(nDotL) * tint, 1.0);
+      // gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz * vec3(nDotL) * tint, 1.0);
+      float lightAmount = getLightAmount();
+      vec3 clr = texture2D(u_Sampler0, v_UV).xyz;
+      // clr += glow * mix(0.45, 1.0, clamp(16.5, 0.0, 1.0));
+      // clr *= (0.4 +  pal(clr.r * 0.33 + clr.g * 0.33 + clr.b * 0.33) * 0.6);
+      // clr = pow(clr, vec3(4.0));
+      gl_FragColor = vec4(clr, 1.0);
     }
     if(u_textureIndex == 2.0) {
-      gl_FragColor = textureCube(u_CubeMap, normalize(v_Position));
+      gl_FragColor = vec4(textureCube(u_CubeMap, normalize(v_Position)).xyz + vec3(0.15), 1.0);
     }
   }`
 
@@ -66,6 +101,8 @@ let u_ProjectionMatrix;
 let u_ViewMatrix;
 let u_textureIndex;
 let u_Sampler0;
+let u_camPos;
+let u_isBloomPass;
 
 let g_cam = null;
 let g_Sky = null;
@@ -146,6 +183,20 @@ function connectVariablesToGLSL() {
   u_textureIndex = gl.getUniformLocation(gl.program, 'u_textureIndex');
   if (!u_textureIndex) {
     console.log('Failed to get the storage location of u_textureIndex');
+    return;
+  }
+
+  // Storage location of textureIndex
+  u_camPos = gl.getUniformLocation(gl.program, 'u_camPos');
+  if (!u_camPos) {
+    console.log('Failed to get the storage location of u_camPos');
+    return;
+  }
+
+  // Storage location of bloom flip
+  u_isBloomPass = gl.getUniformLocation(gl.program, 'u_isBloomPass');
+  if (!u_isBloomPass) {
+    console.log('Failed to get the storage location of u_isBloomPass');
     return;
   }
 }
@@ -244,6 +295,41 @@ function initCubeMap(gl) {
       image.src = url;
     });
   });
+}
+
+let bloomFrameBuffer;
+let bloomTexture;
+let targetTextureWidth;
+let targetTextureHeight;
+
+// https://webglfundamentals.org/webgl/lessons/webgl-render-to-texture.html
+function createBloomBuffer() {
+  // create to render to
+  bloomTexture = gl.createTexture();
+  targetTextureWidth = canvas.width;
+  targetTextureHeight = canvas.height;
+  gl.bindTexture(gl.TEXTURE_2D, bloomTexture);
+
+  // define size and format of level 0
+  const level = 0;
+  const internalFormat = gl.RGBA;
+  const border = 0;
+  const format = gl.RGBA;
+  const type = gl.UNSIGNED_BYTE;
+  const data = null;
+  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                targetTextureWidth, targetTextureHeight, border,
+                format, type, data);
+
+  // set the filtering so we don't need mips
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  bloomFrameBuffer = gl.createFrameBuffer();
+  gl.bindFrameBuffer(gl.FRAMEBUFFER, bloomFrameBuffer); 
+  const attachmentPoint = gl.COLOR_ATTACHMENT0;
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, bloomTexture, level);
 }
 
 function createAttachCubeVertexBuffer() {
@@ -346,6 +432,8 @@ async function main() {
   }
 
   createAttachCubeVertexBuffer();
+
+  createBloomBuffer();
   
   gl.clearColor(0, 0, 0, 1.0);
 
@@ -410,17 +498,36 @@ function renderAllShapes() {
   } else g_previousTime = g_time;
 
   g_cam.updateCamera();
+  gl.uniform3f(u_camPos, g_cam.eye.elements[0], g_cam.eye.elements[1], g_cam.eye.elements[2])
 
   // Set projection matrix
   gl.uniformMatrix4fv(u_ProjectionMatrix, false, g_cam.projectionMatrix.elements);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   gl.uniformMatrix4fv(u_ViewMatrix, false, g_cam.viewMatrix.elements);
-  g_Sky.render(2.0);
-  g_Ground.render(0.0);
-  g_mapObj.render();
-  g_obj.render(new Matrix4().translate(0, 5, 0).rotate(rotationAngle, 0, 1, 0).scale(5, 5, 5), 1);
-  g_wire.render(new Matrix4().translate(0, 5, 0).rotate(rotationAngle, 0, 1, 0).scale(5, 5, 5), 0);
+  {
+    gl.uniform1i(u_isBloomPass, 1.0);
+    gl.bindFrameBuffer(gl.FRAMEBUFFER, bloomFrameBuffer);
+
+    gl.viewport(0, 0, targetTextureWidth, targetTextureHeight);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    g_Sky.render(2.0);
+    g_Ground.render(0.0);
+    g_mapObj.render();
+    g_obj.render(new Matrix4().translate(0, 5, 0).rotate(rotationAngle, 0, 1, 0).scale(5, 5, 5), 1);
+    g_wire.render(new Matrix4().translate(0, 5, 0).rotate(rotationAngle, 0, 1, 0).scale(5, 5, 5), 0);
+  }
+  {
+    gl.bindFrameBuffer(gl.FRAMEBUFFER, null);
+    gl.uniform1i(u_isBloomPass, 0.0);
+
+    g_Sky.render(2.0);
+    g_Ground.render(0.0);
+    g_mapObj.render();
+    g_obj.render(new Matrix4().translate(0, 5, 0).rotate(rotationAngle, 0, 1, 0).scale(5, 5, 5), 1);
+    g_wire.render(new Matrix4().translate(0, 5, 0).rotate(rotationAngle, 0, 1, 0).scale(5, 5, 5), 0);
+  }
 
   sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000 / frameTime).toFixed(2));
   g_startTime = now;
