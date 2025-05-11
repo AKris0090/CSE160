@@ -1,9 +1,9 @@
 class Camera {
     constructor() {
-        this.fov = 60;
+        this.fov = 90;
         this.speed = 0.25;
         this.rot = 5;
-        this.eye = new Vector3([0, 0, 0]);
+        this.eye = new Vector3([5, 2, 5]);
         this.at = new Vector3([0, 0, -1]);
         this.up = new Vector3([0, 1, 0]);
         this.viewMatrix = new Matrix4().setLookAt(this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],  this.at.elements[0], this.at.elements[1], this.at.elements[2],  this.up.elements[0], this.up.elements[1], this.up.elements[2]);
@@ -12,12 +12,14 @@ class Camera {
 
     moveForward() {
         let f = new Vector3().set(this.at).sub(this.eye).normalize().mul(this.speed);
+        f.elements[1] = 0;
         this.eye.add(f);
         this.at.add(f);
     }
 
     moveBack() {
         let f = new Vector3().set(this.at).sub(this.eye).normalize().mul(this.speed);
+        f.elements[1] = 0;
         this.eye.sub(f);
         this.at.sub(f);
     }
@@ -25,6 +27,7 @@ class Camera {
     moveLeft() {
         let f = new Vector3().set(this.at).sub(this.eye);
         let s = Vector3.cross(this.up, f).normalize().mul(this.speed);
+        s.elements[1] = 0;
         this.eye.add(s);
         this.at.add(s);
     }
@@ -32,6 +35,7 @@ class Camera {
     moveRight() {
         let f = new Vector3().set(this.at).sub(this.eye);
         let s = Vector3.cross(f, this.up).normalize().mul(this.speed);
+        s.elements[1] = 0;
         this.eye.add(s);
         this.at.add(s);
     }

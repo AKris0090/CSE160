@@ -45,7 +45,7 @@ class Cube {
 }
 
 function drawCube(m, textureIndex) {
-    applyColor([1, 1, 1, 1]);
+    applyColor([0, 0, 0, 1]);
     gl.uniform1f(u_textureIndex, textureIndex);
     gl.uniformMatrix4fv(u_ModelMatrix, false, m.elements);
     gl.drawArrays(gl.TRIANGLES, 0, 36);

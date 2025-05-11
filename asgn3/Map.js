@@ -3,6 +3,7 @@ let mat = new Matrix4();
 class Map {
     constructor() {
         this.g_Map = [];
+        this.space = 5;
     }
 
     getTile(i, j) {
@@ -17,11 +18,11 @@ class Map {
         for(let i = 0; i < 32; i++) {
             for(let j = 0; j < 32; j++) {
                 var randInt = Math.random();
-                if(randInt < 0.6) {
+                if(randInt < 0.85) {
                     this.g_Map.push(0);
-                } else if (randInt >= 0.6 && randInt < 0.85) {
+                } else if (randInt >= 0.85 && randInt < 0.9) {
                     this.g_Map.push(1);
-                } else if (randInt >= 0.85 && randInt < 0.95) {
+                } else if (randInt >= 0.9 && randInt < 0.95) {
                     this.g_Map.push(2);
                 } else if (randInt >= 0.95 && randInt < 1.0) {
                     this.g_Map.push(3);
@@ -34,9 +35,15 @@ class Map {
         for(let i = -16; i < 16; i++) {
             for(let j = -16; j < 16; j++) {
                 let height = this.getTile(i, j);
+                let side = 1;
                 for(let h = 0; h < height; h++) {
-                    mat.setIdentity().translate(i * 2, h * 2, j * 2);
-                    drawCube(mat, 1);
+                    mat.setIdentity().translate(i * this.space, (2.6 * (h)), j * this.space).rotate(height == 2? rotationAngle : -rotationAngle, 0, 1, 0).scale(side, 1, 1);
+                    g_wire.render(mat, 0.0);
+                    side *= -1;
+                }
+                if (height > 0) {
+                    mat.setIdentity().translate(i * this.space, ((2.55) * (height)) - 1.3, j * this.space).rotate(height == 2? rotationAngle : -rotationAngle, 0, 1, 0).scale(height%2==0? -1:1, 1, height%2==0? -1:1);
+                    g_obj.render(mat, 1.0);
                 }
             }
         }
@@ -47,8 +54,8 @@ class Map {
         const f = new Vector3().set(cam.at).sub(cam.eye).normalize();
         const frontPos = new Vector3().set(pos).add(f.mul(2.5));
 
-        let i = Math.round(frontPos.elements[0] / 2);
-        let j = Math.round(frontPos.elements[2] / 2);
+        let i = Math.round(frontPos.elements[0] / this.space);
+        let j = Math.round(frontPos.elements[2] / this.space);
         i = Math.max(-16, Math.min(15, i));
         j = Math.max(-16, Math.min(15, j));
 
@@ -62,8 +69,8 @@ class Map {
         const f = new Vector3().set(cam.at).sub(cam.eye).normalize();
 
         const frontPos = new Vector3().set(pos).add(f.mul(2.5));
-        let i = Math.round(frontPos.elements[0] / 2);
-        let j = Math.round(frontPos.elements[2] / 2);
+        let i = Math.round(frontPos.elements[0] / this.space);
+        let j = Math.round(frontPos.elements[2] / this.space);
         i = Math.max(-16, Math.min(15, i));
         j = Math.max(-16, Math.min(15, j));
 
