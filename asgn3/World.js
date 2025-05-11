@@ -169,6 +169,7 @@ function initTextures(gl, n) {
 function initCubeMap(gl) {
   return new Promise((resolve, reject) => {
     const cubeMap = gl.createTexture();
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
 
     const faces = [
