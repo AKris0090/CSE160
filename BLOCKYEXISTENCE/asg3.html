@@ -1,0 +1,82 @@
+<!--
+Arjun Krishnan
+akrish29@ucsc.edu
+
+Notes to Grader:
+my submission's special features are notes in the <p> tags below the canvas. I hope you enjoy my project!
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Achievement</title>
+  </head>
+
+  <body onload="main()" style="background-color: black; color: white;">
+    <canvas id="webgl">
+    Please use a browser that supports "canvas"
+    </canvas>
+    <br>
+    <p style="display: block; padding: 6px; margin: auto; text-align: center;">WILLINGNESS TO INTERACT ACKNOWLEDGES A BURDEN OF JUDGEMENT, FRAMED BY EXPECTATION FAR BEYOND OUR ABILITY.</p>
+    <br>
+    <br>
+    <p style="display: block; padding: auto; margin: auto; text-align: center;">YOUR TURN.</p>
+    <br>
+    <br>
+    <p style="display: block; padding: auto; margin: auto; text-align: center;">ACHIEVE.</p>
+    <br>
+    <br>
+    <br>
+    <p id="output"></p>
+    <p></p>
+    NOTES FOR GRADER:
+    <br>
+    <br>
+    <li>WASD: move</li>
+    <li>Q/E: pan left/right</li>
+    <li>Z/X: extend/retract wire (place and remove block)</li>
+    <li>Mouse: look around</li>
+    <br>
+    <br>
+    RUBRIC - wow:
+    <li>Wrote my own obj loader, for objects like the eye, the wire, and the plug (also loads uv coordinates)</li>
+    <li>Learned about cubemaps for a seemingly infinite skybox</li>
+    <li>Shader effects, including basic N-Dot-L lighting, time-based coloring, and posterization</li>
+    <li>P.S. the eye is always looking at you</li>
+    <br>
+    <br>
+    RUBRIC - story:
+    <br>
+    <br>
+    Under constant judgement, you are tasked with the burden of achievement.
+    <br>
+    Plug in the wires into the sockets for the final accomplishment. 
+    <br>
+    If you even can.
+    <br>
+    <br>
+    <br>
+    RUBRIC - requirements:
+    <li>Different texture images for the sky, eye, and wires. Vertex color for wires and ground (there is a ground cube, I promise)</li>
+    <br>
+    <br>
+    CREDITS:
+    <br>
+    <li>Eye model: <a style="color: aqua" href="https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81">https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81</a>, with modifications (textures, model)</li>
+    <li>All other models (plug, wire, socket) created and textured by me, Arjun Krishnan, in Blender.</li>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="World.js"></script>
+    <script src="Cube.js"></script>
+    <script src="Map.js"></script>
+    <script src="OBJLOADER.js"></script>
+    <script src="FrameBufferWrapper.js"></script>
+    <script src="ToneMapping.js"></script>
+    <script src="Camera.js"></script>
+  </body>
+</html>
+
