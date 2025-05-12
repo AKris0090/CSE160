@@ -41,14 +41,16 @@ var FSHADER_SOURCE =
   uniform sampler2D u_Sampler1;
   uniform samplerCube u_CubeMap;
 
+  const vec3 tint = vec3(1.0, 0.75, 0.75);
+
   vec3 stretchColor(vec3 color, float contrast) {
     return clamp((color - 0.5) * contrast + 0.5, 0.0, 1.0);
   }
 
   void main() {
     if(u_textureIndex == 0.0) {
-      mediump float ndotL = max(0.2, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
-      gl_FragColor = u_FragColor * vec4(ndotL);
+      mediump float ndotL = max(0.3, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
+      gl_FragColor = u_FragColor * vec4(ndotL) * vec4(tint, 1.0);
     }
     if(u_textureIndex == 1.0) {
       mediump float ndotL = max(0.2, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
@@ -306,8 +308,9 @@ function createAttachCubeVertexBuffer() {
     return -1;
   }
   
+  console.log(g_obj.numTris);
   g_obj.startVertex = 36;
-  g_obj.numTris = 1660;
+  g_obj.numTris = 1748;
   for(let v of g_obj.vertices) {
     cubeArray.push(v);
   }
@@ -315,7 +318,9 @@ function createAttachCubeVertexBuffer() {
     uvMap.push(uv);
   }
 
-  g_wire.startVertex = 5016;
+  console.log(cubeArray.length / 3);
+
+  g_wire.startVertex = 5280;
   g_wire.numTris = 124;
   for(let v of g_wire.vertices) {
     cubeArray.push(v);
@@ -324,7 +329,7 @@ function createAttachCubeVertexBuffer() {
     uvMap.push(uv);
   }
 
-  g_eye.startVertex = 5388;
+  g_eye.startVertex = 5652;
   g_eye.numTris = 5032;
   for(let v of g_eye.vertices) {
     cubeArray.push(v);
@@ -493,7 +498,7 @@ function renderAllShapes() {
   mat.setIdentity().translate(0, 300, 0).rotate(yaw, 0, 1, 0).rotate(pitch, 1, 0, 0).scale(2, 2, 2);
   g_eye.render(mat, 2.0);
 
-  sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000 / frameTime).toFixed(2));
+  sendTextToHTML("ms: " + frameTime.toFixed(0) + " fps: " + (1000 / frameTime).toFixed(0));
   g_startTime = now;
 }
 
