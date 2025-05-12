@@ -3,8 +3,9 @@
 
 //Notes to Grader:
 //My submission's special features are notes in the <p> and <li> tags below the canvas. I hope you enjoy my project!
+
 // CREDITS:
-// Eye model: https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81, with modifications (textures, model)
+// - Eye model: https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81, with modifications (textures, model)
 
 var VSHADER_SOURCE =
   `
@@ -46,6 +47,20 @@ var FSHADER_SOURCE =
 
   const vec3 tint = vec3(1.0, 0.75, 0.75);
 
+  vec4 Posterize(vec4 inputColor){
+    float gamma = 0.3;
+    float numColors = 8.0;
+
+    vec3 c = inputColor.rgb;
+    c = pow(c, vec3(gamma, gamma, gamma));
+    c = c * numColors;
+    c = floor(c);
+    c = c / numColors;
+    c = pow(c, vec3(1.0/gamma));
+
+    return vec4(c, inputColor.a);
+  }
+
   vec3 stretchColor(vec3 color, float contrast) {
     return clamp((color - 0.5) * contrast + 0.5, 0.0, 1.0);
   }
@@ -53,22 +68,31 @@ var FSHADER_SOURCE =
   void main() {
     if(u_textureIndex == 0.0) {
       mediump float ndotL = max(0.3, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
-      gl_FragColor = u_FragColor * vec4(ndotL) * vec4(tint, 1.0);
+      gl_FragColor = vec4((u_FragColor * vec4(ndotL) * vec4(tint, 1.0)).xyz, 1.0);
     }
     if(u_textureIndex == 1.0) {
       mediump float ndotL = max(0.2, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
       gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz * stretchColor(vec3(ndotL), 2.0), 1.0);
+      gl_FragColor = Posterize(gl_FragColor);
     }
     if(u_textureIndex == 2.0) {
       mediump float ndotL = dot(normalize(v_Normal), vec3(-1, -0.35, 0.5));
       gl_FragColor = vec4(texture2D(u_Sampler1, v_UV).xyz * vec3(ndotL), 1.0);
+      gl_FragColor = Posterize(gl_FragColor) * vec4(2.0);
+    }
+    if(u_textureIndex == 2.5) {
+      mediump float ndotL = dot(normalize(v_Normal), vec3(-1, -0.35, 0.5));
+      gl_FragColor = vec4(texture2D(u_Sampler1, v_UV).xyz * vec3(ndotL), 1.0);
+      gl_FragColor = Posterize(gl_FragColor) * vec4((sin(u_Time) + 1.0) / 2.0);
     }
     if(u_textureIndex == 3.0) {
       gl_FragColor = vec4(texture2D(u_Sampler2, v_UV).xyz, 1.0);
+      gl_FragColor = Posterize(gl_FragColor);
     }
     if(u_textureIndex == 4.0) {
       vec4 color = textureCube(u_CubeMap, normalize(v_Position)) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
       gl_FragColor = vec4(stretchColor(color.xyz, 2.0), 1.0);
+      gl_FragColor = Posterize(gl_FragColor);
     }
   }`
 
@@ -97,6 +121,13 @@ let g_obj = null;
 let g_wire = null;
 let g_eye = null;
 let g_socket = null;
+let g_field = null;
+
+let fields = [];
+
+function drawFields() {
+
+}
 
 var g_startTime = performance.now() / 1000.0;
 
@@ -363,11 +394,20 @@ function createAttachCubeVertexBuffer() {
   }
 
   g_socket.startVertex = 20748;
-  g_socket.numTris = 5032;
+  g_socket.numTris = 1724;
   for(let v of g_socket.vertices) {
     cubeArray.push(v);
   }
   for(let uv of g_socket.uvs) {
+    uvMap.push(uv);
+  }
+
+  g_field.startVertex = 25920;
+  g_field.numTris = 494;
+  for(let v of g_field.vertices) {
+    cubeArray.push(v);
+  }
+  for(let uv of g_field.uvs) {
     uvMap.push(uv);
   }
   
@@ -437,6 +477,10 @@ async function main() {
     await new Promise(resolve => {
       g_socket = new OBJLOADER('objs/socket.obj', resolve);
     })
+
+    await new Promise(resolve => {
+      g_field = new OBJLOADER('objs/field.obj', resolve);
+    })
   } catch (e) {
     console.error("Resource loading failed:", e);
     return;
@@ -461,6 +505,9 @@ async function main() {
     canvas.requestPointerLock();
   };
 
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
   document.addEventListener('pointerlockchange', () => {
     if (document.pointerLockElement === canvas) {
       document.addEventListener("mousemove", onMouseMove, false);
@@ -483,6 +530,12 @@ async function main() {
   document.addEventListener('keyup', (ev) => {
     g_keysPressed[ev.key.toLowerCase()] = false;
   });
+
+  document.addEventListener('resize', (event) => {
+    canvas.width = window.innerWidth * 0.98;
+    canvas.height = window.innerHeight * 0.94;
+    g_cam.projectionMatrix = new Matrix4().setPerspective(g_cam.fov, canvas.width/canvas.height, 0.1, 1000);
+  })
 
   requestAnimationFrame(tick);
 }
@@ -521,13 +574,6 @@ function renderAllShapes() {
   g_Ground.render(0.0);
   g_mapObj.render();
 
-  // for(let h = 0; h < heightM; h++) {
-  //   mat.setIdentity().translate(0, (13 * (h)), 0).rotate(rotationAngle, 0, 1, 0).scale(side, 5, 5);
-  //   g_wire.render(mat, 0.0);
-  //   side *= -1;
-  // }
-  // mat.setIdentity().translate(0, ((9.5) * (heightM)), 0).rotate(rotationAngle, 0, 1, 0).scale(-5, 5, -5);
-  // g_obj.render(mat, 1.0);
 
   let side = 5;
   for(let h = 0; h < heightM; h++) {
@@ -545,6 +591,7 @@ function renderAllShapes() {
   let pitch = Math.atan2(-f.elements[1], Math.hypot(f.elements[0], f.elements[2])) * toDeg - 90;
   mat.setIdentity().translate(0, 300, 0).rotate(yaw, 0, 1, 0).rotate(pitch, 1, 0, 0).scale(2, 2, 2);
   g_eye.render(mat, 2.0);
+  g_field.render(new Matrix4().translate(0,175,0).rotate(rotationAngle * 0.5, 0, 1, 0).scale(25, 25, 25), 2.5);
 
   sendTextToHTML("ms: " + frameTime.toFixed(0) + " fps: " + (1000 / frameTime).toFixed(0));
   g_startTime = now;
