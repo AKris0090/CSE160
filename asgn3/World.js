@@ -3,6 +3,8 @@
 
 //Notes to Grader:
 //My submission's special features are notes in the <p> and <li> tags below the canvas. I hope you enjoy my project!
+// CREDITS:
+// Eye model: https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81, with modifications (textures, model)
 
 var VSHADER_SOURCE =
   `
