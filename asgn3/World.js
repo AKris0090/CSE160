@@ -591,7 +591,7 @@ function renderAllShapes() {
   let pitch = Math.atan2(-f.elements[1], Math.hypot(f.elements[0], f.elements[2])) * toDeg - 90;
   mat.setIdentity().translate(0, 300, 0).rotate(yaw, 0, 1, 0).rotate(pitch, 1, 0, 0).scale(2, 2, 2);
   g_eye.render(mat, 2.0);
-  g_field.render(new Matrix4().translate(0,175,0).rotate(rotationAngle * 0.5, 0, 1, 0).scale(25, 25, 25), 2.5);
+  g_field.render(new Matrix4().translate(0,175,0).rotate(rotationAngle, 0, 1, 0).scale(25, 25, 25), 2.5);
 
   sendTextToHTML("ms: " + frameTime.toFixed(0) + " fps: " + (1000 / frameTime).toFixed(0));
   g_startTime = now;
