@@ -22,7 +22,7 @@ var VSHADER_SOURCE =
     v_UV = a_UV;
     v_Position = a_Position.xyz;
     v_Normal = mat3(u_ModelMatrix) * a_Normal.xyz;
-    if(u_textureIndex < 3.0) {
+    if(u_textureIndex < 4.0) {
       gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
     } else {
       gl_Position = u_ProjectionMatrix * mat4(mat3(u_ViewMatrix)) * u_ModelMatrix * a_Position;
@@ -39,6 +39,7 @@ var FSHADER_SOURCE =
   uniform float u_Time;
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
+  uniform sampler2D u_Sampler2;
   uniform samplerCube u_CubeMap;
 
   const vec3 tint = vec3(1.0, 0.75, 0.75);
@@ -61,6 +62,9 @@ var FSHADER_SOURCE =
       gl_FragColor = vec4(texture2D(u_Sampler1, v_UV).xyz * vec3(ndotL), 1.0);
     }
     if(u_textureIndex == 3.0) {
+      gl_FragColor = vec4(texture2D(u_Sampler2, v_UV).xyz, 1.0);
+    }
+    if(u_textureIndex == 4.0) {
       vec4 color = textureCube(u_CubeMap, normalize(v_Position)) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
       gl_FragColor = vec4(stretchColor(color.xyz, 2.0), 1.0);
     }
@@ -80,6 +84,7 @@ let u_ViewMatrix;
 let u_textureIndex;
 let u_Sampler0;
 let u_Sampler1;
+let u_Sampler2;
 
 let g_cam = null;
 let g_Sky = null;
@@ -89,6 +94,7 @@ let g_mapObj = null;
 let g_obj = null;
 let g_wire = null;
 let g_eye = null;
+let g_socket = null;
 
 var g_startTime = performance.now() / 1000.0;
 
@@ -187,6 +193,7 @@ function sendTextureToGLSL(gl, texture, sampler, image, textureUnit) {
 
 let texture;
 let g_eyeTexture;
+let g_socketTexture;
 
 function initTextures(gl) {
   return new Promise((resolve, reject) => {
@@ -224,6 +231,24 @@ function initEyeTextures(gl) {
   });
 }
 
+function initSocketTexture(gl) {
+  return new Promise((resolve, reject) => {
+    g_socket = gl.createTexture();
+    if (!g_socket) return reject("Failed to create texture object");
+
+    u_Sampler2 = gl.getUniformLocation(gl.program, "u_Sampler2");
+    if (!u_Sampler2) return reject("Failed to get sampler location");
+
+    var image = new Image();
+    image.onload = function () {
+      sendTextureToGLSL(gl, g_socket, u_Sampler2, image, 2);
+      resolve();
+    };
+    image.onerror = () => reject("Failed to load texture image");
+    image.src = "textures/socket.png";
+  });
+}
+
 // https://webglfundamentals.org/webgl/lessons/webgl-environment-maps.html
 function initCubeMap(gl) {
   return new Promise((resolve, reject) => {
@@ -252,9 +277,9 @@ function initCubeMap(gl) {
           gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 
           const u_CubeMap = gl.getUniformLocation(gl.program, 'u_CubeMap');
-          gl.activeTexture(gl.TEXTURE2);
+          gl.activeTexture(gl.TEXTURE3);
           gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
-          gl.uniform1i(u_CubeMap, 2);
+          gl.uniform1i(u_CubeMap, 3);
           resolve();
         }
       };
@@ -308,7 +333,6 @@ function createAttachCubeVertexBuffer() {
     return -1;
   }
   
-  console.log(g_obj.numTris);
   g_obj.startVertex = 36;
   g_obj.numTris = 1748;
   for(let v of g_obj.vertices) {
@@ -317,8 +341,6 @@ function createAttachCubeVertexBuffer() {
   for(let uv of g_obj.uvs) {
     uvMap.push(uv);
   }
-
-  console.log(cubeArray.length / 3);
 
   g_wire.startVertex = 5280;
   g_wire.numTris = 124;
@@ -335,6 +357,15 @@ function createAttachCubeVertexBuffer() {
     cubeArray.push(v);
   }
   for(let uv of g_eye.uvs) {
+    uvMap.push(uv);
+  }
+
+  g_socket.startVertex = 20748;
+  g_socket.numTris = 5032;
+  for(let v of g_socket.vertices) {
+    cubeArray.push(v);
+  }
+  for(let uv of g_socket.uvs) {
     uvMap.push(uv);
   }
   
@@ -387,6 +418,7 @@ async function main() {
   try {
     await initTextures(gl);
     await initEyeTextures(gl);
+    await initSocketTexture(gl);
     await initCubeMap(gl);
 
     await new Promise(resolve => {
@@ -398,6 +430,10 @@ async function main() {
 
     await new Promise(resolve => {
       g_eye = new OBJLOADER('objs/eye.obj', resolve);
+    })
+
+    await new Promise(resolve => {
+      g_socket = new OBJLOADER('objs/socket.obj', resolve);
     })
   } catch (e) {
     console.error("Resource loading failed:", e);
@@ -451,7 +487,7 @@ async function main() {
 
 let rotationAngle = 0;
 let g_previousTime;
-const heightM = 2;
+let heightM = 2;
 const toDeg = 180 / Math.PI;
 
 function renderAllShapes() {
@@ -479,18 +515,28 @@ function renderAllShapes() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   gl.uniformMatrix4fv(u_ViewMatrix, false, g_cam.viewMatrix.elements);
-  g_Sky.render(3.0);
+  g_Sky.render(4.0);
   g_Ground.render(0.0);
   g_mapObj.render();
 
+  // for(let h = 0; h < heightM; h++) {
+  //   mat.setIdentity().translate(0, (13 * (h)), 0).rotate(rotationAngle, 0, 1, 0).scale(side, 5, 5);
+  //   g_wire.render(mat, 0.0);
+  //   side *= -1;
+  // }
+  // mat.setIdentity().translate(0, ((9.5) * (heightM)), 0).rotate(rotationAngle, 0, 1, 0).scale(-5, 5, -5);
+  // g_obj.render(mat, 1.0);
+
   let side = 5;
   for(let h = 0; h < heightM; h++) {
-    mat.setIdentity().translate(0, (13 * (h)), 0).rotate(rotationAngle, 0, 1, 0).scale(side, 5, 5);
-    g_wire.render(mat, 0.0);
-    side *= -1;
+      mat.setIdentity().translate(0, (13 * (h)) + 4, 0).rotate(heightM == 2? rotationAngle : -rotationAngle, 0, 1, 0).scale(side, 5, 5);
+      g_wire.render(mat, 0.0);
+      side *= -1;
   }
-  mat.setIdentity().translate(0, ((9.5) * (heightM)), 0).rotate(rotationAngle, 0, 1, 0).scale(-5, 5, -5);
-  g_obj.render(mat, 1.0);
+  if (heightM > 0) {
+      mat.setIdentity().translate(0, ((12) * (heightM)), 0).rotate(heightM == 2? rotationAngle : -rotationAngle, 0, 1, 0).scale(heightM%2==0? -5:5, 5, heightM%2==0? -5:5);
+      g_obj.render(mat, 1.0);
+  }
 
   let f = new Vector3(g_cam.eye.elements).sub(new Vector3([0, 300, 0])).normalize();
   let yaw = Math.atan2(f.elements[0], f.elements[2]) * toDeg;

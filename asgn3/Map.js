@@ -1,4 +1,5 @@
 let mat = new Matrix4();
+let g_targets = [];
 
 class Map {
     constructor() {
@@ -14,6 +15,19 @@ class Map {
         this.g_Map[(i + 16) * 32 + (j + 16)] = value;
     }
 
+    checkTiles(ob) {
+        for(let i = 0; i < g_targets.length; i++) {
+            if(ob.i == g_targets[i].i && ob.j == g_targets[i].j && ob.height == g_targets[i].height + 1) {
+                g_targets.splice(i, 1);
+                heightM++;
+            }
+        }
+        if(g_targets.length === 0) {
+            this.generateSockets();
+            heightM = 2;
+        }
+    }
+
     generateMap() {
         for(let i = 0; i < 32; i++) {
             for(let j = 0; j < 32; j++) {
@@ -26,6 +40,32 @@ class Map {
                     this.g_Map.push(2);
                 } else if (randInt >= 0.95 && randInt < 1.0) {
                     this.g_Map.push(3);
+                }
+            }
+        }
+        this.generateSockets();
+    }
+
+    generateSockets() {
+        if(g_targets.length >= 5) {
+            return;
+        }
+        for(let a = 0; a < 5; a++) {
+            while(true) {
+                let ob = {
+                    i: Math.floor(Math.random() * 32) - 16,
+                    j: Math.floor(Math.random() * 32) - 16,
+                    height: 1 + Math.floor(Math.random() * 8),
+                }
+                let b = true;
+                for(let b = 0; b < g_targets.length; b++) {
+                    if(g_targets[b].i == ob.i && g_targets[b].j == ob.j) {
+                        b = false;
+                    }
+                }
+                if(b) {
+                    g_targets.push(ob);
+                    break;
                 }
             }
         }
@@ -47,6 +87,12 @@ class Map {
                 }
             }
         }
+
+        for(let v = 0; v < g_targets.length; v++) {
+            let o = g_targets[v];
+            mat.setIdentity().translate(o.i * this.space, ((2.55) * (o.height)) - 2.7, o.j * this.space).rotate(o.height == 2? rotationAngle : -rotationAngle, 0, 1, 0).scale(o.height%2==0? -1:1, 1, o.height%2==0? -1:1);
+            g_socket.render(mat, 3.0);
+        }
     }
 
     addBlockInFront(cam) {
@@ -62,6 +108,7 @@ class Map {
         if (this.getTile(i, j) < 10) {
             this.setTile(i, j, this.getTile(i, j) + 1);
         }
+        this.checkTiles({i: i, j: j, height: this.getTile(i, j) + 1});
     }
 
     removeBlockInFront(cam) {
@@ -77,5 +124,6 @@ class Map {
         if (this.getTile(i, j) > 0) {
             this.setTile(i, j, this.getTile(i, j) - 1);
         }
+        this.checkTiles({i: i, j: j, height: this.getTile(i, j) - 1});
     }
 }
