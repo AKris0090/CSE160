@@ -33,7 +33,7 @@ var FSHADER_SOURCE2 =
   }
 
   void main() {
-    gl_FragColor = Posterize(texture2D(u_colorImage, v_UV));
+    gl_FragColor = Posterize(texture2D(u_colorImage, v_UV)) * vec4(1.35);
   }
 `
 

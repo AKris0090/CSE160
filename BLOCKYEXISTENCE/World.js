@@ -45,21 +45,6 @@ var FSHADER_SOURCE =
   uniform sampler2D u_Sampler2;
   uniform samplerCube u_CubeMap;
 
-  float rand(vec2 n) { 
-	  return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
-  }
-
-  const mat2 m = mat2( 0.80,  0.60, -0.60,  0.80 );
-
-  float noise(vec2 n) {
-    return sin(n.x) * sin(n.y);
-  }
-
-  float pattern(vec2 p) {
-    vec2 q = vec2( noise( p + vec2(0.0,0.0) ), noise( p + vec2(5.2,1.3) ));
-    return noise( p + 4.0*q );
-  }
-
   const vec3 tint = vec3(1.0, 0.75, 0.75);
 
   vec3 stretchColor(vec3 color, float contrast) {
@@ -159,7 +144,7 @@ function connectVariablesToGLSL() {
   if (!u_colorSampler < 0) {
     return reject("Failed to get sampler location");
   }
-  
+
   tonePass.createFSQuadBuffers();
 
   colorFramebuffer = new FBWrapper();
@@ -243,6 +228,25 @@ function sendTextureToGLSL(gl, texture, sampler, image, textureUnit) {
 let texture;
 let g_eyeTexture;
 let g_socketTexture;
+let g_grungeTexture;
+
+function initGrunge(gl) {
+  return new Promise((resolve, reject) => {
+    g_grungeTexture = gl.createTexture();
+    if (!g_grungeTexture) return reject("Failed to create texture object");
+
+    u_Sampler = gl.getUniformLocation(tonePass.program, "u_grungeImage");
+    if (!u_Sampler) return reject("Failed to get sampler location");
+
+    var image = new Image();
+    image.onload = function () {
+      sendTextureToGLSL(gl, g_grungeTexture, u_Sampler, image, 1);
+      resolve();
+    };
+    image.onerror = () => reject("Failed to load texture image");
+    image.src = "textures/grunge.jpg";
+  });
+}
 
 function initTextures(gl) {
   return new Promise((resolve, reject) => {
@@ -594,10 +598,12 @@ function drawColor(now) {
   gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, colorFramebuffer.fbObject);
+  
   gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.uniform1i(u_Sampler0, 0);
+  
   gl.uniform1f(u_Time, now / 1000.0);
 
-  // Set projection matrix
   gl.uniformMatrix4fv(u_ProjectionMatrix, false, g_cam.projectionMatrix.elements);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -632,9 +638,7 @@ function drawToneMap() {
 
   gl.useProgram(tonePass.program);
 
-  gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, colorFramebuffer.texture);
-  gl.uniform1i(u_colorSampler, 0);
 
   gl.enableVertexAttribArray(a_Position2);
   gl.bindBuffer(gl.ARRAY_BUFFER, tonePass.VBO);
