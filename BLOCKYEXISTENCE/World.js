@@ -7,93 +7,14 @@
 // CREDITS:
 // - Eye model: https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81, with modifications (textures, model)
 
-var VSHADER_SOURCE =
-  `
-  precision mediump float;
-  attribute vec4 a_Position;
-  attribute vec2 a_UV;
-  attribute vec3 a_Normal;
-  varying vec3 v_Normal;
-  varying vec2 v_UV;
-  varying vec3 v_Position;
-  uniform float u_textureIndex;
-  uniform mat4 u_ModelMatrix;
-  uniform mat4 u_ViewMatrix;
-  uniform mat4 u_ProjectionMatrix;
-
-  void main() {
-    v_UV = a_UV;
-    v_Position = a_Position.xyz;
-    v_Normal = mat3(u_ModelMatrix) * a_Normal.xyz;
-    if(u_textureIndex < 4.0) {
-      gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
-    } else {
-      gl_Position = u_ProjectionMatrix * mat4(mat3(u_ViewMatrix)) * u_ModelMatrix * a_Position;
-    }
-  }`
-
-var FSHADER_SOURCE =
-  `precision mediump float;
-  varying vec2 v_UV;
-  varying vec3 v_Position;
-  varying vec3 v_Normal;
-  uniform vec4 u_FragColor;
-  uniform float u_textureIndex;
-  uniform float u_isBloom;
-  uniform float u_Time;
-  uniform sampler2D u_Sampler0;
-  uniform sampler2D u_Sampler1;
-  uniform sampler2D u_Sampler2;
-  uniform samplerCube u_CubeMap;
-
-  const vec3 tint = vec3(1.0, 0.75, 0.75);
-
-  vec3 stretchColor(vec3 color, float contrast) {
-    return clamp((color - 0.5) * contrast + 0.5, 0.0, 1.0);
-  }
-
-  void main() {
-    mediump float rNdotL = dot(normalize(v_Normal), vec3(0.5, 0.5, 0)) + dot(normalize(v_Normal), vec3(0.0, -1.0, 0));
-    if(u_textureIndex == 0.0) {
-      mediump float ndotL = max(0.3, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
-      gl_FragColor = vec4((u_FragColor * vec4(ndotL) * vec4(tint, 1.0)).xyz, 1.0);
-    }
-    if(u_textureIndex == 1.0) {
-      mediump float ndotL = max(0.2, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
-      gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz * stretchColor(vec3(ndotL), 2.0) * vec3(2.0), 1.0);
-    }
-    if(u_textureIndex == 2.0) {
-      mediump float ndotL = dot(normalize(v_Normal), vec3(-1, -0.35, 0.5));
-      gl_FragColor = vec4(texture2D(u_Sampler1, v_UV).xyz * vec3(ndotL) * vec3(0.75), 1.0);
-    }
-    if(u_textureIndex == 2.5) {
-      mediump float ndotL = dot(normalize(v_Normal), vec3(-1, -0.35, 0.5));
-      gl_FragColor = vec4(texture2D(u_Sampler1, v_UV).xyz * vec3(ndotL), 1.0);
-      gl_FragColor = gl_FragColor * vec4((sin(u_Time) + 1.0) / 2.0);
-    }
-    if(u_textureIndex == 3.0) {
-      gl_FragColor = vec4(texture2D(u_Sampler2, v_UV).xyz, 1.0);
-    }
-    if(u_textureIndex == 4.0) {
-      vec4 color = textureCube(u_CubeMap, normalize(v_Position)) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
-      gl_FragColor = vec4(stretchColor(color.xyz, 2.0), 1.0);
-    }
-    if(u_isBloom == 1.0) {
-      if(rNdotL > 0.2) {
-        gl_FragColor = vec4(gl_FragColor.rgb, 1.0);
-      } else {
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-      }
-    }
-  }`
+const toDeg = 180 / Math.PI;
 
 let canvas;
 let gl;
+
 let colorPass;
-let tonePass;
 let colorFramebuffer;
 let bloomFramebuffer;
-
 let a_Position;
 let a_UV;
 let a_Normal;
@@ -108,21 +29,35 @@ let u_Sampler1;
 let u_Sampler2;
 let u_isBloom;
 
+let tonePass;
+let a_Position2;
 let u_colorSampler;
 let u_bloomSampler;
-let a_Position2;
 let u_canvasWH;
 
 let g_cam = null;
+
 let g_Sky = null;
 let g_Ground = null;
 let g_mapObj = null;
-
 let g_obj = null;
 let g_wire = null;
 let g_eye = null;
 let g_socket = null;
 let g_field = null;
+
+let g_plugTexture;
+let g_eyeTexture;
+let g_socketTexture;
+let g_grungeTexture;
+
+let vertexBuffer;
+let uvBuffer;
+let normalBuffer;
+
+let rotationAngle = 0;
+let g_previousTime;
+let heightM = 2;
 
 var g_startTime = performance.now() / 1000.0;
 
@@ -140,13 +75,16 @@ function setupWebGL() {
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
+    gl.clearColor(0, 0, 0, 1.0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 }
 
-function connectVariablesToGLSL() {
+// tonemapping/composition pass for bloom - initialize attribute/uniform positions
+function initTonePass() {
   tonePass = new REALPROGRAMCUZTHEOLDISUSELESS(VSHADER_SOURCE2, FSHADER_SOURCE2);
   gl.useProgram(tonePass.program);
 
-  // Get the storage location of a_Position
   a_Position2 = gl.getAttribLocation(tonePass.program, 'a_Position');
   if (a_Position2 < 0) {
     console.log('Failed to get the storage location of a_Position2');
@@ -169,14 +107,18 @@ function connectVariablesToGLSL() {
   }
 
   tonePass.createFSQuadBuffers();
+}
 
+function connectVariablesToGLSL() {
+  initTonePass();
+
+  // create both framebuffers - one for rendering color and one for rendering bloom texture
   colorFramebuffer = new FBWrapper();
   bloomFramebuffer = new FBWrapper();
 
   colorPass = new REALPROGRAMCUZTHEOLDISUSELESS(VSHADER_SOURCE, FSHADER_SOURCE);
   gl.useProgram(colorPass.program);
 
-  // Get the storage location of a_Position
   a_Position = gl.getAttribLocation(colorPass.program, 'a_Position');
   if (a_Position < 0) {
     console.log('Failed to get the storage location of a_Position');
@@ -195,49 +137,42 @@ function connectVariablesToGLSL() {
     return;
   }
 
-  // Get the storage location of u_FragColor
   u_FragColor = gl.getUniformLocation(colorPass.program, 'u_FragColor');
   if (!u_FragColor) {
     console.log('Failed to get the storage location of u_FragColor');
     return;
   }
 
-  // Storage location of u_ModelMatrix
   u_ModelMatrix = gl.getUniformLocation(colorPass.program, 'u_ModelMatrix');
   if (!u_ModelMatrix) {
     console.log('Failed to get the storage location of u_ModelMatrix');
     return;
   }
 
-  // Storage location of camera matrix
   u_ProjectionMatrix = gl.getUniformLocation(colorPass.program, 'u_ProjectionMatrix');
   if (!u_ProjectionMatrix) {
     console.log('Failed to get the storage location of u_ProjectionMatrix');
     return;
   }
 
-  // Storage location of camera matrix
   u_ViewMatrix = gl.getUniformLocation(colorPass.program, 'u_ViewMatrix');
   if (!u_ViewMatrix) {
     console.log('Failed to get the storage location of u_ViewMatrix');
     return;
   }
 
-  // Storage location of textureIndex
   u_textureIndex = gl.getUniformLocation(colorPass.program, 'u_textureIndex');
   if (!u_textureIndex) {
     console.log('Failed to get the storage location of u_textureIndex');
     return;
   }
 
-  // Storage location of textureIndex
   u_Time = gl.getUniformLocation(colorPass.program, 'u_Time');
   if (!u_Time) {
     console.log('Failed to get the storage location of u_Time');
     return;
   }
 
-  // Storage location of textureIndex
   u_isBloom = gl.getUniformLocation(colorPass.program, 'u_isBloom');
   if (!u_isBloom) {
     console.log('Failed to get the storage location of u_isBloom');
@@ -256,11 +191,7 @@ function sendTextureToGLSL(gl, texture, sampler, image, textureUnit) {
   gl.uniform1i(sampler, textureUnit);
 }
 
-let texture;
-let g_eyeTexture;
-let g_socketTexture;
-let g_grungeTexture;
-
+// for some reason, I couldnt push repeat code into a helper function. will figure it out later (maybe)?
 function initGrunge(gl) {
   return new Promise((resolve, reject) => {
     g_grungeTexture = gl.createTexture();
@@ -279,17 +210,17 @@ function initGrunge(gl) {
   });
 }
 
-function initTextures(gl) {
+function initPlugTexture(gl) {
   return new Promise((resolve, reject) => {
-    texture = gl.createTexture();
-    if (!texture) return reject("Failed to create texture object");
+    g_plugTexture = gl.createTexture();
+    if (!g_plugTexture) return reject("Failed to create texture object");
 
     u_Sampler0 = gl.getUniformLocation(colorPass.program, "u_Sampler0");
     if (!u_Sampler0) return reject("Failed to get sampler location");
 
     var image = new Image();
     image.onload = function () {
-      sendTextureToGLSL(gl, texture, u_Sampler0, image, 0);
+      sendTextureToGLSL(gl, g_plugTexture, u_Sampler0, image, 0);
       resolve();
     };
     image.onerror = () => reject("Failed to load texture image");
@@ -395,10 +326,6 @@ function createCubeNormals() {
   return out;
 }
 
-let vertexBuffer;
-let uvBuffer;
-let normalBuffer;
-
 function createAttachCubeVertexBuffer() {
   // Create a buffer object
   vertexBuffer = gl.createBuffer();
@@ -494,13 +421,49 @@ function onMouseMove(ev) {
     g_cam.panUp(ev.movementY * scale);
 }
 
+function setupDocumentListeners() {
+  canvas.onclick = function() {
+    canvas.requestPointerLock();
+  };
+
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement === canvas) {
+      document.addEventListener("mousemove", onMouseMove, false);
+    } else {
+      document.removeEventListener("mousemove", onMouseMove, false);
+    }
+  }, false);
+
+  document.addEventListener('keydown', (ev) => {
+    g_keysPressed[ev.key.toLowerCase()] = true;
+
+    if (ev.key === 'z') {
+      g_mapObj.addBlockInFront(g_cam);
+    }
+    if (ev.key === 'x') {
+      g_mapObj.removeBlockInFront(g_cam);
+    }
+  });
+
+  document.addEventListener('keyup', (ev) => {
+    g_keysPressed[ev.key.toLowerCase()] = false;
+  });
+
+  document.addEventListener('resize', () => {
+    canvas.width = window.innerWidth * 0.98;
+    canvas.height = window.innerHeight * 0.94;
+    g_cam.projectionMatrix = new Matrix4().setPerspective(g_cam.fov, canvas.width/canvas.height, 0.1, 1000);
+  });
+}
+
 async function main() {
   setupWebGL();
 
   connectVariablesToGLSL();
 
+  // async awaits so that draws only start after everything has been loaded, since OBJ loading is also asynchronous.
   try {
-    await initTextures(gl);
+    await initPlugTexture(gl);
     await initEyeTextures(gl);
     await initSocketTexture(gl);
     await initCubeMap(gl);
@@ -529,8 +492,6 @@ async function main() {
   }
 
   createAttachCubeVertexBuffer();
-  
-  gl.clearColor(0, 0, 0, 1.0);
 
   g_Sky = new Cube();
   g_Sky.m_matrix.scale(500, 500, 500);
@@ -543,51 +504,12 @@ async function main() {
 
   g_cam = new Camera();
 
-  canvas.onclick = function() {
-    canvas.requestPointerLock();
-  };
-
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-  document.addEventListener('pointerlockchange', () => {
-    if (document.pointerLockElement === canvas) {
-      document.addEventListener("mousemove", onMouseMove, false);
-    } else {
-      document.removeEventListener("mousemove", onMouseMove, false);
-    }
-  }, false);
-
-  document.addEventListener('keydown', (ev) => {
-    g_keysPressed[ev.key.toLowerCase()] = true;
-
-    if (ev.key === 'z') {
-      g_mapObj.addBlockInFront(g_cam);
-    }
-    if (ev.key === 'x') {
-      g_mapObj.removeBlockInFront(g_cam);
-    }
-  });
-
-  document.addEventListener('keyup', (ev) => {
-    g_keysPressed[ev.key.toLowerCase()] = false;
-  });
-
-  document.addEventListener('resize', (event) => {
-    canvas.width = window.innerWidth * 0.98;
-    canvas.height = window.innerHeight * 0.94;
-    g_cam.projectionMatrix = new Matrix4().setPerspective(g_cam.fov, canvas.width/canvas.height, 0.1, 1000);
-  });
-
+  setupDocumentListeners();
   requestAnimationFrame(tick);
 }
 
-let rotationAngle = 0;
-let g_previousTime;
-let heightM = 2;
-const toDeg = 180 / Math.PI;
-
 function renderAllShapes() {
+  // update globals
   handleKeys();
   let now = performance.now();
   let nowSeconds = now / 1000;
@@ -602,11 +524,7 @@ function renderAllShapes() {
   } else g_previousTime = g_time;
   g_cam.updateCamera();
 
-  gl.useProgram(tonePass.program);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-  gl.activeTexture(gl.TEXTURE0);
-  
+  // bloom sets most of the textures/uniforms, so dont need to repeat in color pass
   drawBloom(now);
   drawColor();
   drawToneMap();
@@ -616,8 +534,10 @@ function renderAllShapes() {
 }
 
 function drawBloom(now) {
+  // use color shader program (color vertex/fragment), since its setup to also handle bloom
   gl.useProgram(colorPass.program);
   
+  // since tonemapping uses a separate vertex buffer, we have to rebind all attributes
   gl.enableVertexAttribArray(a_Position);
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
@@ -630,11 +550,13 @@ function drawBloom(now) {
   gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
   gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
 
+  // Bind the bloom's frame buffer to draw to the bloom texture
   gl.bindFramebuffer(gl.FRAMEBUFFER, bloomFramebuffer.fbObject);
   
+  // Have to reset these active textures for some reason since theres no such thing as a descriptor set
   gl.uniform1f(u_isBloom, 1.0);
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D, g_plugTexture);
   gl.uniform1i(u_Sampler0, 0);
 
   gl.activeTexture(gl.TEXTURE1);
@@ -644,10 +566,11 @@ function drawBloom(now) {
   gl.uniform1f(u_Time, now / 1000.0);
 
   gl.uniformMatrix4fv(u_ProjectionMatrix, false, g_cam.projectionMatrix.elements);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+  // Framebuffer has a depth attachment, so clear both
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.uniformMatrix4fv(u_ViewMatrix, false, g_cam.viewMatrix.elements);
-  g_mapObj.render(1);
+  g_mapObj.render();
 
   for(let h = 0; h < heightM; h++) {
     mat.setIdentity().translate(0, (13 * (h)) + 4, 0).rotate(h % 2 == 0? rotationAngle : rotationAngle + 180, 0, 1, 0).scale(5, 5, 5);
@@ -667,13 +590,14 @@ function drawBloom(now) {
 }
 
 function drawColor() {
+  // Now that drawing to bloom tex is done, draw similarly but just swtich the output to the color image
   gl.bindFramebuffer(gl.FRAMEBUFFER, colorFramebuffer.fbObject);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.uniform1f(u_isBloom, 0.0);
 
   g_Sky.render(4.0);
   g_Ground.render(0.0);
-  g_mapObj.render(1); // 1 is for bloom/ 0 = no bloom
+  g_mapObj.render();
 
   for(let h = 0; h < heightM; h++) {
     mat.setIdentity().translate(0, (13 * (h)) + 4, 0).rotate(h % 2 == 0? rotationAngle : rotationAngle + 180, 0, 1, 0).scale(5, 5, 5);
@@ -693,12 +617,16 @@ function drawColor() {
 }
 
 function drawToneMap() {
+  // Now that we have drawn to bloom and color, bind null to bind the canvas's framebuffer
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  // switch shader program to tone vertex/fragment shaders
   gl.useProgram(tonePass.program);
 
   gl.uniform2f(u_canvasWH, canvas.width, canvas.height);
 
+  // Re-establish the textures to use the color and bloom framebuffer's textures
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, colorFramebuffer.texture);
   gl.uniform1i(u_colorSampler, 0);
@@ -710,6 +638,7 @@ function drawToneMap() {
   gl.bindBuffer(gl.ARRAY_BUFFER, tonePass.VBO);
   gl.vertexAttribPointer(a_Position2, 2, gl.FLOAT, false, 0, 0);
 
+  // Draw full screen quad - two triangles that make up the entire width/height of the canvasa
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 

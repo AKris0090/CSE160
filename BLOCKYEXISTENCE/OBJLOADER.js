@@ -10,6 +10,8 @@ class OBJLOADER {
         })
     }
 
+    // One big function to populate all vertices - thank you chatgpt for pseudocode
+    // Modified to store vertices instead of triangles and repeat vertices instead of indices
     parseOBJ(objText) {
         var positions = [];
         var uvs = [];

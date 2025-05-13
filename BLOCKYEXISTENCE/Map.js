@@ -15,6 +15,7 @@ class Map {
         this.g_Map[(i + 16) * 32 + (j + 16)] = value;
     }
 
+    // after adding/removing a wire segment, check all the targets to see if a target has been reached
     checkTiles(ob) {
         for(let i = 0; i < g_targets.length; i++) {
             if(ob.i == g_targets[i].i && ob.j == g_targets[i].j && ob.height == g_targets[i].height + 1) {
@@ -71,17 +72,16 @@ class Map {
         }
     }
 
-    render(t) {
+    // render wires and plugs programatically dependent on height array
+    render() {
         for(let i = -16; i < 16; i++) {
             for(let j = -16; j < 16; j++) {
                 let height = this.getTile(i, j);
                 let side = 1;
-                if(t === 1) {
-                    for(let h = 0; h < height; h++) {
-                        mat.setIdentity().translate(i * this.space, (2.6 * (h)), j * this.space).rotate(h % 2 == 0?  rotationAngle : rotationAngle + 180, 0, 1, 0).scale(1, 1, 1);
-                        g_wire.render(mat, 0.0);
-                        side *= -1;
-                    }
+                for(let h = 0; h < height; h++) {
+                    mat.setIdentity().translate(i * this.space, (2.6 * (h)), j * this.space).rotate(h % 2 == 0?  rotationAngle : rotationAngle + 180, 0, 1, 0).scale(1, 1, 1);
+                    g_wire.render(mat, 0.0);
+                    side *= -1;
                 }
                 if (height > 0) {
                     mat.setIdentity().translate(i * this.space, ((2.55) * (height)) - 1.3, j * this.space).rotate(height % 2 == 0? rotationAngle + 180: rotationAngle, 0, 1, 0);
