@@ -16,6 +16,8 @@ var FSHADER_SOURCE2 =
   `precision mediump float;
 
   uniform sampler2D u_colorImage;
+  uniform sampler2D u_bloomSampler;
+  uniform vec2 u_canvasWH;
   varying vec2 v_UV;
 
   vec4 Posterize(vec4 inputColor){
@@ -32,8 +34,47 @@ var FSHADER_SOURCE2 =
     return vec4(c, inputColor.a);
   }
 
+  const float r = 3.0;
+
+  // https://stackoverflow.com/questions/64837705/opengl-blurring
+  vec4 blur() {
+    float rr=r*r,w,w0;
+    w0=0.3780/pow(r,1.975);
+    vec2 p;
+    vec4 col=vec4(0.0,0.0,0.0,0.0);
+    float dx = (1.0 / u_canvasWH.x) + 0.00075;
+    p.x = v_UV.x + (-r * dx);
+    for (float x = -r; x <= r; x++) {
+      float xx = x * x;
+      float dy = (1.0 / u_canvasWH.y) + 0.00075;
+      p.y = v_UV.y + (-r * dy);
+      for (float y = -r; y <= r; y++) {
+        float yy = y * y;
+        if (xx + yy <= rr) {
+          w = w0 * exp((-xx - yy) / (2.0 * rr));
+          col += texture2D(u_bloomSampler, p) * w;
+        }
+        p.y += dy;
+      }
+      p.x += dx;
+    }
+    return col;
+  }
+
+  // https://www.shadertoy.com/view/lsKSWR
+  float vig() {
+    vec2 uv = gl_FragCoord.xy / u_canvasWH;
+    uv *= 1.0 - uv.yx;
+    float v = uv.x * uv.y * 13.0;
+    v = pow(v, 0.1);
+    return v;
+  }
+
   void main() {
-    gl_FragColor = Posterize(texture2D(u_colorImage, v_UV)) * vec4(1.35);
+    vec4 b = blur();
+    float v = vig();
+
+    gl_FragColor = vec4((Posterize(texture2D(u_colorImage, v_UV)).xyz + (blur()).xyz) * vec3(v), 1.0);
   }
 `
 

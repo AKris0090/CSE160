@@ -39,6 +39,7 @@ var FSHADER_SOURCE =
   varying vec3 v_Normal;
   uniform vec4 u_FragColor;
   uniform float u_textureIndex;
+  uniform float u_isBloom;
   uniform float u_Time;
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
@@ -52,17 +53,18 @@ var FSHADER_SOURCE =
   }
 
   void main() {
+    mediump float rNdotL = dot(normalize(v_Normal), vec3(0.5, 0.5, 0)) + dot(normalize(v_Normal), vec3(0.0, -1.0, 0));
     if(u_textureIndex == 0.0) {
       mediump float ndotL = max(0.3, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
       gl_FragColor = vec4((u_FragColor * vec4(ndotL) * vec4(tint, 1.0)).xyz, 1.0);
     }
     if(u_textureIndex == 1.0) {
       mediump float ndotL = max(0.2, dot(normalize(v_Normal), vec3(0.5, 0.5, 0))) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
-      gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz * stretchColor(vec3(ndotL), 2.0), 1.0);
+      gl_FragColor = vec4(texture2D(u_Sampler0, v_UV).xyz * stretchColor(vec3(ndotL), 2.0) * vec3(2.0), 1.0);
     }
     if(u_textureIndex == 2.0) {
       mediump float ndotL = dot(normalize(v_Normal), vec3(-1, -0.35, 0.5));
-      gl_FragColor = vec4(texture2D(u_Sampler1, v_UV).xyz * vec3(ndotL), 1.0);
+      gl_FragColor = vec4(texture2D(u_Sampler1, v_UV).xyz * vec3(ndotL) * vec3(0.75), 1.0);
     }
     if(u_textureIndex == 2.5) {
       mediump float ndotL = dot(normalize(v_Normal), vec3(-1, -0.35, 0.5));
@@ -76,6 +78,13 @@ var FSHADER_SOURCE =
       vec4 color = textureCube(u_CubeMap, normalize(v_Position)) * (((sin(u_Time) + 1.0) / 2.0) + 0.5);
       gl_FragColor = vec4(stretchColor(color.xyz, 2.0), 1.0);
     }
+    if(u_isBloom == 1.0) {
+      if(rNdotL > 0.2) {
+        gl_FragColor = vec4(gl_FragColor.rgb, 1.0);
+      } else {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      }
+    }
   }`
 
 let canvas;
@@ -83,6 +92,7 @@ let gl;
 let colorPass;
 let tonePass;
 let colorFramebuffer;
+let bloomFramebuffer;
 
 let a_Position;
 let a_UV;
@@ -96,9 +106,12 @@ let u_textureIndex;
 let u_Sampler0;
 let u_Sampler1;
 let u_Sampler2;
+let u_isBloom;
 
 let u_colorSampler;
+let u_bloomSampler;
 let a_Position2;
+let u_canvasWH;
 
 let g_cam = null;
 let g_Sky = null;
@@ -145,9 +158,20 @@ function connectVariablesToGLSL() {
     return reject("Failed to get sampler location");
   }
 
+  u_bloomSampler = gl.getUniformLocation(tonePass.program, "u_bloomSampler");
+  if (!u_bloomSampler < 0) {
+    return reject("Failed to get sampler location");
+  }
+
+  u_canvasWH = gl.getUniformLocation(tonePass.program, "u_canvasWH");
+  if (!u_canvasWH < 0) {
+    return reject("Failed to get sampler location");
+  }
+
   tonePass.createFSQuadBuffers();
 
   colorFramebuffer = new FBWrapper();
+  bloomFramebuffer = new FBWrapper();
 
   colorPass = new REALPROGRAMCUZTHEOLDISUSELESS(VSHADER_SOURCE, FSHADER_SOURCE);
   gl.useProgram(colorPass.program);
@@ -210,6 +234,13 @@ function connectVariablesToGLSL() {
   u_Time = gl.getUniformLocation(colorPass.program, 'u_Time');
   if (!u_Time) {
     console.log('Failed to get the storage location of u_Time');
+    return;
+  }
+
+  // Storage location of textureIndex
+  u_isBloom = gl.getUniformLocation(colorPass.program, 'u_isBloom');
+  if (!u_isBloom) {
+    console.log('Failed to get the storage location of u_isBloom');
     return;
   }
 }
@@ -575,14 +606,16 @@ function renderAllShapes() {
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   gl.activeTexture(gl.TEXTURE0);
-  drawColor(now);
+  
+  drawBloom(now);
+  drawColor();
   drawToneMap();
 
   sendTextToHTML("ms: " + frameTime.toFixed(0) + " fps: " + (1000 / frameTime).toFixed(0));
   g_startTime = now;
 }
 
-function drawColor(now) {
+function drawBloom(now) {
   gl.useProgram(colorPass.program);
   
   gl.enableVertexAttribArray(a_Position);
@@ -597,10 +630,16 @@ function drawColor(now) {
   gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
   gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
 
-  gl.bindFramebuffer(gl.FRAMEBUFFER, colorFramebuffer.fbObject);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, bloomFramebuffer.fbObject);
   
+  gl.uniform1f(u_isBloom, 1.0);
+  gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.uniform1i(u_Sampler0, 0);
+
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, g_eyeTexture);
+  gl.uniform1i(u_Sampler1, 1);
   
   gl.uniform1f(u_Time, now / 1000.0);
 
@@ -608,15 +647,37 @@ function drawColor(now) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   gl.uniformMatrix4fv(u_ViewMatrix, false, g_cam.viewMatrix.elements);
+  g_mapObj.render(1);
+
+  for(let h = 0; h < heightM; h++) {
+    mat.setIdentity().translate(0, (13 * (h)) + 4, 0).rotate(h % 2 == 0? rotationAngle : rotationAngle + 180, 0, 1, 0).scale(5, 5, 5);
+    g_wire.render(mat, 0.0);
+  }
+  if (heightM > 0) {
+    mat.setIdentity().translate(0, ((12) * (heightM)), 0).rotate(heightM % 2 == 0? rotationAngle + 180 : rotationAngle, 0, 1, 0).scale(5, 5, 5);
+    g_obj.render(mat, 1.0);
+  }
+
+  let f = new Vector3(g_cam.eye.elements).sub(new Vector3([0, 300, 0])).normalize();
+  let yaw = Math.atan2(f.elements[0], f.elements[2]) * toDeg;
+  let pitch = Math.atan2(-f.elements[1], Math.hypot(f.elements[0], f.elements[2])) * toDeg - 90;
+  mat.setIdentity().translate(0, 300, 0).rotate(yaw, 0, 1, 0).rotate(pitch, 1, 0, 0).scale(2, 2, 2);
+  g_eye.render(mat, 2.0);
+  g_field.render(new Matrix4().translate(0,175,0).rotate(rotationAngle, 0, 1, 0).scale(25, 25, 25), 2.5);
+}
+
+function drawColor() {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, colorFramebuffer.fbObject);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.uniform1f(u_isBloom, 0.0);
+
   g_Sky.render(4.0);
   g_Ground.render(0.0);
-  g_mapObj.render();
+  g_mapObj.render(1); // 1 is for bloom/ 0 = no bloom
 
-  let side = 5;
   for(let h = 0; h < heightM; h++) {
-      mat.setIdentity().translate(0, (13 * (h)) + 4, 0).rotate(h % 2 == 0? rotationAngle : rotationAngle + 180, 0, 1, 0).scale(5, 5, 5);
-      g_wire.render(mat, 0.0);
-      side *= -1;
+    mat.setIdentity().translate(0, (13 * (h)) + 4, 0).rotate(h % 2 == 0? rotationAngle : rotationAngle + 180, 0, 1, 0).scale(5, 5, 5);
+    g_wire.render(mat, 0.0);
   }
   if (heightM > 0) {
       mat.setIdentity().translate(0, ((12) * (heightM)), 0).rotate(heightM % 2 == 0? rotationAngle + 180 : rotationAngle, 0, 1, 0).scale(5, 5, 5);
@@ -633,12 +694,17 @@ function drawColor(now) {
 
 function drawToneMap() {
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
   gl.useProgram(tonePass.program);
 
+  gl.uniform2f(u_canvasWH, canvas.width, canvas.height);
+
+  gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, colorFramebuffer.texture);
+  gl.uniform1i(u_colorSampler, 0);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, bloomFramebuffer.texture);
+  gl.uniform1i(u_bloomSampler, 1);
 
   gl.enableVertexAttribArray(a_Position2);
   gl.bindBuffer(gl.ARRAY_BUFFER, tonePass.VBO);

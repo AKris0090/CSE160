@@ -71,15 +71,17 @@ class Map {
         }
     }
 
-    render() {
+    render(t) {
         for(let i = -16; i < 16; i++) {
             for(let j = -16; j < 16; j++) {
                 let height = this.getTile(i, j);
                 let side = 1;
-                for(let h = 0; h < height; h++) {
-                    mat.setIdentity().translate(i * this.space, (2.6 * (h)), j * this.space).rotate(h % 2 == 0?  rotationAngle : rotationAngle + 180, 0, 1, 0).scale(1, 1, 1);
-                    g_wire.render(mat, 0.0);
-                    side *= -1;
+                if(t === 1) {
+                    for(let h = 0; h < height; h++) {
+                        mat.setIdentity().translate(i * this.space, (2.6 * (h)), j * this.space).rotate(h % 2 == 0?  rotationAngle : rotationAngle + 180, 0, 1, 0).scale(1, 1, 1);
+                        g_wire.render(mat, 0.0);
+                        side *= -1;
+                    }
                 }
                 if (height > 0) {
                     mat.setIdentity().translate(i * this.space, ((2.55) * (height)) - 1.3, j * this.space).rotate(height % 2 == 0? rotationAngle + 180: rotationAngle, 0, 1, 0);
