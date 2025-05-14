@@ -154,26 +154,25 @@ var FSHADER_SOURCE2 = // tonemapping fragment shader
     return v;
   }
 
-  const float maxCr = 0.01;
-  
+  const float maxCr = 0.02;
   vec2 chromeAbberOffset() {
     vec2 cr = vec2(maxCr);
-    if(v_UV.x > 0.5) {
-      cr.x = cr.x * -1.0;
-      cr.y = cr.y * -1.0;
-    }
     return cr;
   }
+
 
   void main() {
     vec4 b = blur();
     float v = vig(0.1);
     vec2 c = chromeAbberOffset();
+    vec2 pos = gl_FragCoord.xy / u_canvasWH;
+    vec2 dir = pos - vec2(0.5, 0.5);
+    c = c * normalize(dir);
     c = c * (1.0 - v);
 
-    float red = texture2D(u_colorImage, v_UV + vec2(c.x, 0.0)).r;
+    float red = texture2D(u_colorImage, v_UV + vec2(c.x, c.y)).r;
     float green = texture2D(u_colorImage, v_UV + vec2(0.0, 0.0)).g;
-    float blue = texture2D(u_colorImage, v_UV + vec2(c.y, 0.0)).b;
+    float blue = texture2D(u_colorImage, v_UV + vec2(c.x, c.y)).b;
     vec3 frg = (Posterize(vec4(red, green, blue, 1.0)).xyz + (blur()).xyz) * vec3(v);
 
     // exposure tonemapping - https://learnopengl.com/Advanced-Lighting/HDR
