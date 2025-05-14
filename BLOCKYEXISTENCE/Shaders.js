@@ -146,19 +146,36 @@ var FSHADER_SOURCE2 = // tonemapping fragment shader
   }
 
   // https://www.shadertoy.com/view/lsKSWR
-  float vig() {
+  float vig(float am) {
     vec2 uv = gl_FragCoord.xy / u_canvasWH;
     uv *= 1.0 - uv.yx;
     float v = uv.x * uv.y * 13.0;
-    v = pow(v, 0.1);
+    v = pow(v, am);
     return v;
+  }
+
+  const float maxCr = 0.01;
+  
+  vec2 chromeAbberOffset() {
+    vec2 cr = vec2(maxCr);
+    if(v_UV.x > 0.5) {
+      cr.x = cr.x * -1.0;
+      cr.y = cr.y * -1.0;
+    }
+    return cr;
   }
 
   void main() {
     vec4 b = blur();
-    float v = vig();
+    float v = vig(0.1);
+    vec2 c = chromeAbberOffset();
+    c = c * (1.0 - v);
 
-    vec3 frg = (Posterize(texture2D(u_colorImage, v_UV)).xyz + (blur()).xyz) * vec3(v);
+    float red = texture2D(u_colorImage, v_UV + vec2(c.x, 0.0)).r;
+    float green = texture2D(u_colorImage, v_UV + vec2(0.0, 0.0)).g;
+    float blue = texture2D(u_colorImage, v_UV + vec2(c.y, 0.0)).b;
+    vec3 frg = (Posterize(vec4(red, green, blue, 1.0)).xyz + (blur()).xyz) * vec3(v);
+
     // exposure tonemapping - https://learnopengl.com/Advanced-Lighting/HDR
     gl_FragColor = vec4(vec3(1.0) - exp(-frg * 2.5), 1.0);
   }
