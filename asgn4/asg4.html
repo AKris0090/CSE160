@@ -13,41 +13,33 @@ my submission's special features are notes in the <p> tags below the canvas. I h
     <title>Lighting</title>
   </head>
 
-  <body onload="main()" style="background-color: black; color: white;">
-    <canvas id="webgl">
+  <body onload="main()" style="color: white; background-color: black;">
+    <canvas id="webgl" style="padding: 0; margin: auto auto; align-self: center; display: block" width="1920" height="1000">
     Please use a browser that supports "canvas"
     </canvas>
-    <br>
-    <br>
-    <br>
-    <div style="background-color: white; width: 85%; height: 5px; display: block; padding: auto; margin: auto"></div>
-    <br>
+    <div style="display: block; padding: 0; margin: 15px; align-self: center; background-color: white; height: 5px"></div>
+
     <p id="output"></p>
-    <input type="button" id="normals" value="NORMALS">
-    <input type="button" id="color" value="COLOR">
     <p></p>
-    NOTES FOR GRADER:
-    <br>
-    <br>
-    <li>WASD: move</li>
-    <li>Q/E: pan left/right</li>
-    <li>Z/X: extend/retract wire (place and remove block)</li>
-    <li>Mouse: look around</li>
-    <br>
-    <br>
-    CREDITS:
-    <br>
-    <li>Eye model: <a style="color: aqua" href="https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81">https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81</a>, with modifications (textures, model)</li>
-    <li>All other models (plug, wire, socket) created and textured by me, Arjun Krishnan, in Blender.</li>
+    <input type="button" id="normals" value="NORMALS"/> 
+    <input type="button" id="color" value="COLOR"/> 
+    <p></p>
 
     <script src="../lib/webgl-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>
     <script src="../lib/cuon-utils.js"></script>
     <script src="../lib/cuon-matrix-cse160.js"></script>
-    <script src="World.js"></script>
+    <script src="BlockyAnimal.js"></script>
+    <script src="Triangle.js"></script>
     <script src="Cube.js"></script>
-    <script src="OBJLOADER.js"></script>
-    <script src="Camera.js"></script>
+    <script src="Area.js"></script>
+    <script src="Vulture.js"></script>
+    <script src="Bone.js"></script>
+    <script src="AnimationClips/FlyDownAnimClips.js"></script>
+    <script src="AnimationClips/FlyUpAnimClips.js"></script>
+    <script src="AnimationClips/Turnaround.js"></script>
+    <script src="AnimationClips/TurnaroundStart.js"></script>
+    <script src="AnimationClips/DefaultAnimClips.js"></script>
+    <script src="AnimationClips/BoneAnimClips.js"></script>
   </body>
 </html>
-
