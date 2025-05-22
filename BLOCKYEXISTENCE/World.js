@@ -504,8 +504,6 @@ async function main() {
 
   g_cam = new Camera();
 
-  console.log(new Matrix4().setLookAt(0, 0, 2, 0, 0, 0, 0, 1, 0));
-
   setupDocumentListeners();
   requestAnimationFrame(tick);
 }
