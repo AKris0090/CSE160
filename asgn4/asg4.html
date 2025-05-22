@@ -1,0 +1,53 @@
+<!--
+Arjun Krishnan
+akrish29@ucsc.edu
+
+Notes to Grader:
+my submission's special features are notes in the <p> tags below the canvas. I hope you enjoy my project!
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lighting</title>
+  </head>
+
+  <body onload="main()" style="background-color: black; color: white;">
+    <canvas id="webgl">
+    Please use a browser that supports "canvas"
+    </canvas>
+    <br>
+    <br>
+    <br>
+    <div style="background-color: white; width: 85%; height: 5px; display: block; padding: auto; margin: auto"></div>
+    <br>
+    <p id="output"></p>
+    <input type="button" id="normals" value="NORMALS">
+    <input type="button" id="color" value="COLOR">
+    <p></p>
+    NOTES FOR GRADER:
+    <br>
+    <br>
+    <li>WASD: move</li>
+    <li>Q/E: pan left/right</li>
+    <li>Z/X: extend/retract wire (place and remove block)</li>
+    <li>Mouse: look around</li>
+    <br>
+    <br>
+    CREDITS:
+    <br>
+    <li>Eye model: <a style="color: aqua" href="https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81">https://sketchfab.com/3d-models/eye-implant-e988ba5725fe4111b82f945a068c7c81</a>, with modifications (textures, model)</li>
+    <li>All other models (plug, wire, socket) created and textured by me, Arjun Krishnan, in Blender.</li>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="World.js"></script>
+    <script src="Cube.js"></script>
+    <script src="OBJLOADER.js"></script>
+    <script src="Camera.js"></script>
+  </body>
+</html>
+
