@@ -5,7 +5,8 @@
 //My submission's special features are notes in the <p> and <li> tags below the canvas. I hope you enjoy my project!
 
 var VSHADER_SOURCE =
-  `attribute vec4 a_Position;
+  `precision mediump float;
+  attribute vec4 a_Position;
   attribute vec4 a_Normal;
 
   uniform mat4 u_ModelMatrix;
@@ -25,13 +26,14 @@ var FSHADER_SOURCE =
   `precision mediump float;
 
   const float ambientCoefficient = 0.2;
-  const float specularCoefficient = 10.0;
+  const float specularCoefficient = 64.0;
 
   varying vec3 v_normalOut;
   varying vec3 v_lightPosOut;
   uniform vec3 u_camPos;
   uniform vec4 u_FragColor;
   uniform vec3 u_lightColor;
+  uniform vec3 u_lightPos;
   uniform float u_displayType;
 
   void main() {
@@ -43,12 +45,12 @@ var FSHADER_SOURCE =
       vec3 ambient = u_lightColor * ambientCoefficient;
 
       // specular component
-      vec3 ref = normalize(reflect(-v_lightPosOut, v_normalOut));
+      vec3 ref = normalize(reflect(-u_lightPos, v_normalOut));
       float spec = max(0.0, dot(normalize(u_camPos), ref));
       spec = pow(spec, specularCoefficient);
       vec3 specular = u_lightColor * spec;
 
-      gl_FragColor = vec4(u_FragColor.xyz * (ambient + diffuse + specular), 1.0);
+      gl_FragColor = vec4(u_FragColor.xyz * clamp((ambient + diffuse * 0.75 + specular), vec3(0.0), vec3(1.0)), 1.0);
     } else if (u_displayType == 0.0) {
       gl_FragColor = vec4(v_normalOut, 1.0); 
     } else {
@@ -211,44 +213,71 @@ function addVertsFromIndices(tIndices) {
   }
 }
 
+let subdivisions = 3;
+
 // http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
 function addIcoSphereVertices() {
   var t = (1.0 + Math.sqrt(5.0)) / 2.0;
 
-  g_icoVerts.push([-1,  t,  0]);
-  g_icoVerts.push([ 1,  t,  0]);
-  g_icoVerts.push([-1, -t,  0]);
-  g_icoVerts.push([ 1, -t,  0]);
-  g_icoVerts.push([ 0, -1,  t]);
-  g_icoVerts.push([ 0,  1,  t]);
-  g_icoVerts.push([ 0, -1, -t]);
-  g_icoVerts.push([ 0,  1, -t]);
-  g_icoVerts.push([ t,  0, -1]);
-  g_icoVerts.push([ t,  0,  1]);
-  g_icoVerts.push([-t,  0, -1]);
-  g_icoVerts.push([-t,  0,  1]);
+  let verts = [
+    [-1,  t,  0], [ 1,  t,  0], [-1, -t,  0], [ 1, -t,  0],
+    [ 0, -1,  t], [ 0,  1,  t], [ 0, -1, -t], [ 0,  1, -t],
+    [ t,  0, -1], [ t,  0,  1], [-t,  0, -1], [-t,  0,  1]
+  ];
 
-  addVertsFromIndices([11, 0, 5]);
-  addVertsFromIndices([5, 0, 1]);
-  addVertsFromIndices([1, 0, 7]);
-  addVertsFromIndices([7, 0, 10]);
-  addVertsFromIndices([10, 0, 11]);
-  addVertsFromIndices([5, 1, 9]);
-  addVertsFromIndices([11, 5, 4]);
-  addVertsFromIndices([10, 11, 2]);
-  addVertsFromIndices([7, 10, 6]);
-  addVertsFromIndices([1, 7, 8]);
-  addVertsFromIndices([9, 3, 4]);
-  addVertsFromIndices([4, 3, 2]);
-  addVertsFromIndices([2, 3, 6]);
-  addVertsFromIndices([6, 3, 8]);
-  addVertsFromIndices([8, 3, 9]);
-  addVertsFromIndices([9, 4, 5]);
-  addVertsFromIndices([4, 2, 11]);
-  addVertsFromIndices([2, 6, 10]);
-  addVertsFromIndices([6, 8, 7]);
-  addVertsFromIndices([8, 9, 1]);
+  verts = verts.map(v => {
+    const len = Math.hypot(...v);
+    return v.map(x => x / len);
+  });
+
+  let faces = [
+    [0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],
+    [1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],
+    [3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],
+    [4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]
+  ];
+
+  const middlePointCache = {};
+  function getMiddlePoint(i1, i2) {
+    // Order indices to avoid duplicates
+    const key = i1 < i2 ? `${i1}_${i2}` : `${i2}_${i1}`;
+    if (middlePointCache[key] !== undefined) return middlePointCache[key];
+    // Calculate midpoint and normalize
+    const v1 = verts[i1], v2 = verts[i2];
+    const mid = [
+      (v1[0] + v2[0]) / 2,
+      (v1[1] + v2[1]) / 2,
+      (v1[2] + v2[2]) / 2
+    ];
+    const len = Math.hypot(...mid);
+    const norm = mid.map(x => x / len);
+    verts.push(norm);
+    const idx = verts.length - 1;
+    middlePointCache[key] = idx;
+    return idx;
+  }
+
+  for (let i = 0; i < subdivisions; i++) {
+    const newFaces = [];
+    for (const [a, b, c] of faces) {
+      const ab = getMiddlePoint(a, b);
+      const bc = getMiddlePoint(b, c);
+      const ca = getMiddlePoint(c, a);
+      newFaces.push([a, ab, ca]);
+      newFaces.push([b, bc, ab]);
+      newFaces.push([c, ca, bc]);
+      newFaces.push([ab, bc, ca]);
+    }
+    faces = newFaces;
+  }
+  g_icoTriangleCount = faces.length * 3;
+
+  for (const [a, b, c] of faces) {
+    cubeArray.push(...verts[c], ...verts[b], ...verts[a]);
+  }
 }
+
+let g_icoTriangleCount;
 
 function createAttachCubeVertexBuffer() {
   addIcoSphereVertices();
@@ -458,11 +487,15 @@ function renderAllShapes() {
   // https://stackoverflow.com/questions/21603412/algorithm-3d-orbiting-camera-control-with-mouse-drag
   
   var cameraMatrix = new Matrix4();
-  // view matrix using xy angle and zoom
   cameraMatrix.translate(0, 0, -g_Zoom).rotate(angleY, 1, 0, 0).rotate(angleX, 0, 1, 0)
   cameraMatrix.translate(-g_X + 2.5, -g_Y, -g_Z);
 
-  gl.uniform3fv(u_camPos, [0, 0, -g_Zoom]);
+  let invCameraMatrix = new Matrix4(cameraMatrix);
+  invCameraMatrix.invert();
+
+  let camPos = new Vector3([0, 0, 0]);
+  camPos = invCameraMatrix.multiplyVector3(camPos);
+  gl.uniform3fv(u_camPos, camPos.elements);
 
   // get vp matrix by multiplying them, and multiply by model in shader
   var finalMat = new Matrix4().set(g_ViewProjection);
