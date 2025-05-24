@@ -22,8 +22,32 @@ my submission's special features are notes in the <p> tags below the canvas. I h
     <p id="output"></p>
     <p></p>
     <input type="button" id="normals" value="NORMALS"/> 
+    <input type="button" id="light" value="LIGHTED"/> 
     <input type="button" id="color" value="COLOR"/> 
-    <p></p>
+    <br>
+    <br>
+    <input type="button" id="lightAnim" value="ANIMATE LIGHT"/> 
+    <br>
+    <br>
+    Point Light Color:
+    <br>
+    R: <input type="range" id="pointRed" min="0" max="255" step="1" value="255"/>
+    G: <input type="range" id="pointGreen" min="0" max="255" step="1" value="255"/>
+    B: <input type="range" id="pointBlue" min="0" max="255" step="1" value="255"/>
+    <br>
+    <br>
+    Point Light Position:
+    <br>
+    X: <input type="range" id="pointX" min="-50" max="50" step="1" value="0"/>
+    Y: <input type="range" id="pointY" min="-50" max="50" step="1" value="20"/>
+    Z: <input type="range" id="pointZ" min="-50" max="50" step="1" value="0"/>
+
+    <br>
+    <br>
+    Notes to Grader:
+    <br><br>
+    <li>Move camera with WASD, pan up and down with E/Q</li>
+    <li>Buttons below show all lighting options</li>
 
     <script src="../lib/webgl-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>
@@ -35,6 +59,7 @@ my submission's special features are notes in the <p> tags below the canvas. I h
     <script src="Area.js"></script>
     <script src="Vulture.js"></script>
     <script src="Bone.js"></script>
+    <script src="Camera.js"></script>
     <script src="AnimationClips/FlyDownAnimClips.js"></script>
     <script src="AnimationClips/FlyUpAnimClips.js"></script>
     <script src="AnimationClips/Turnaround.js"></script>

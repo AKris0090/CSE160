@@ -12,13 +12,17 @@ var VSHADER_SOURCE =
   uniform mat4 u_ModelMatrix;
   uniform mat4 u_GlobalRotateMatrix;
   uniform vec3 u_lightPos;
+  uniform vec3 u_lightPos2;
   varying vec3 v_normalOut;
   varying vec3 v_lightPosOut;
+  varying vec3 v_lightPosOut2;
+  varying vec3 v_vertexPos;
 
   void main() {
     v_normalOut = normalize(mat3(u_ModelMatrix) * a_Normal.xyz);
-    vec3 vertexPos = (u_ModelMatrix * a_Position).xyz;
-    v_lightPosOut = normalize(u_lightPos - vertexPos);
+    v_vertexPos = (u_ModelMatrix * a_Position).xyz;
+    v_lightPosOut = u_lightPos - v_vertexPos;
+    v_lightPosOut2 = u_lightPos2 - v_vertexPos;
     gl_Position = u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
   }`
 
@@ -27,30 +31,46 @@ var FSHADER_SOURCE =
 
   const float ambientCoefficient = 0.2;
   const float specularCoefficient = 64.0;
+  uniform vec3 spotDirection;
+  const float spotCosineCutoff = 0.75;
 
   varying vec3 v_normalOut;
   varying vec3 v_lightPosOut;
+  varying vec3 v_lightPosOut2;
+  varying vec3 v_vertexPos;
   uniform vec3 u_camPos;
   uniform vec4 u_FragColor;
   uniform vec3 u_lightColor;
   uniform vec3 u_lightPos;
+  uniform vec3 u_lightColor2;
+  uniform vec3 u_lightPos2;
   uniform float u_displayType;
 
   void main() {
     if(u_displayType == 1.0) {
+      vec3 lightDir = normalize(v_lightPosOut);
+      vec3 lightDir2 = normalize(v_lightPosOut2);
+
       // diffuse component
-      vec3 diffuse = u_lightColor * max(0.0, dot(v_normalOut, v_lightPosOut));
+      vec3 diffuse = u_lightColor * max(0.0, dot(v_normalOut, lightDir));
+      vec3 diffuse2 = u_lightColor2 * max(0.0, dot(v_normalOut, lightDir2));
       
       // ambient component
-      vec3 ambient = u_lightColor * ambientCoefficient;
+      vec3 ambient = u_FragColor.xyz * ambientCoefficient;
 
       // specular component
-      vec3 ref = normalize(reflect(-u_lightPos, v_normalOut));
+      vec3 viewDir = normalize(u_camPos - v_vertexPos);
+      vec3 ref = reflect(-lightDir, v_normalOut);
       float spec = max(0.0, dot(normalize(u_camPos), ref));
       spec = pow(spec, specularCoefficient);
       vec3 specular = u_lightColor * spec;
 
-      gl_FragColor = vec4(u_FragColor.xyz * clamp((ambient + diffuse * 0.75 + specular), vec3(0.0), vec3(1.0)), 1.0);
+      vec3 ref2 = reflect(-lightDir2, v_normalOut);
+      float spec2 = max(0.0, dot(normalize(u_camPos), ref2));
+      spec2 = pow(spec2, specularCoefficient);
+      vec3 specular2 = u_lightColor2 * spec2;
+
+      gl_FragColor = vec4(u_FragColor.xyz * clamp((ambient + (diffuse + diffuse2) * 0.75 + (specular + specular2)), vec3(0.0), vec3(1.0)), 1.0);
     } else if (u_displayType == 0.0) {
       gl_FragColor = vec4(v_normalOut, 1.0); 
     } else {
@@ -69,32 +89,30 @@ let u_GlobalRotateMatrix;
 let u_displayType;
 let u_lightPos;
 let u_lightColor;
+let u_lightPos2;
+let u_lightColor2;
 let u_camPos;
+let u_spotDirection;
 
-let g_lastX = 0;
-let g_lastY = 0;
 
-let g_ViewProjection = new Matrix4();
-let g_globalRotateMatrix;
+let g_cam = null;
+
 let g_vulture;
 let g_area;
 let g_bone;
 let g_lightPos = [0, 20, 0];
+let g_spotLightPos = [30, 20, 0];
 let g_lightColor = [1.0, 1.0, 1.0];
 
 let g_currentTime = -1;
 let g_time = -1;
 
-let angleX = 55.8;
-let angleY = 13.8;
-let g_lookAtX = -20;
-let g_lookAtY = 6;
-let g_lookAtZ = 0;
-let g_Zoom = 7.33;
-
-let g_normalDisplay = false;
+let g_lightType = 1.0;
 
 let upTop = false;
+let scale = 0.2;
+
+let lightAnimated = true;
 
 var g_startTime = performance.now() / 1000.0;
 
@@ -108,6 +126,21 @@ function setupWebGL() {
     }
 
     gl.enable(gl.DEPTH_TEST);
+}
+
+function calculateSpotDirection() {
+
+}
+
+let g_keysPressed = {};
+
+function handleKeys() {
+  if (g_keysPressed["w"]) g_cam.moveForward();
+  if (g_keysPressed["a"]) g_cam.moveLeft();
+  if (g_keysPressed["s"]) g_cam.moveBack();
+  if (g_keysPressed["d"]) g_cam.moveRight();
+  if (g_keysPressed["q"]) g_cam.moveDown();
+  if (g_keysPressed["e"]) g_cam.moveUp();
 }
 
 function connectVariablesToGLSL() {
@@ -168,6 +201,18 @@ function connectVariablesToGLSL() {
     return;
   }
 
+  u_lightPos2 = gl.getUniformLocation(gl.program, 'u_lightPos2');
+  if (!u_lightPos2) {
+    console.log('Failed to get the storage location of u_lightPos2');
+    return;
+  }
+
+  u_lightColor2 = gl.getUniformLocation(gl.program, 'u_lightColor2');
+  if (!u_lightColor2) {
+    console.log('Failed to get the storage location of u_lightColor2');
+    return;
+  }
+
   u_camPos = gl.getUniformLocation(gl.program, 'u_camPos');
   if (!u_camPos) {
     console.log('Failed to get the storage location of u_camPos');
@@ -175,10 +220,31 @@ function connectVariablesToGLSL() {
   }
 }
 
+let lightX = 0;
+let lightY = 20;
+let lightZ = 0;
+
 function addActionsForHtmlUI() {
-  // holy moly
-  document.getElementById('normals').onclick = function() { g_normalDisplay = true; };
-  document.getElementById('color').onclick = function() { g_normalDisplay = false; };
+  document.getElementById('normals').onclick = function() { g_lightType = 0.0; };
+  document.getElementById('light').onclick = function() { g_lightType = 1.0; };
+  document.getElementById('color').onclick = function() { g_lightType = -1.0; };
+
+  document.getElementById('lightAnim').onclick = function() { 
+    if(lightAnimated) {
+      g_lightPos = [0, 20, 0];
+    } else {
+      g_lightPos = [lightX, lightY, lightZ];
+    }
+    lightAnimated = !lightAnimated;
+  };
+
+  document.getElementById('pointRed')?.addEventListener('mousemove', function() { g_lightColor[0] = this.value / 255.0;});
+  document.getElementById('pointGreen')?.addEventListener('mousemove', function() { g_lightColor[1] = this.value / 255.0;});
+  document.getElementById('pointBlue')?.addEventListener('mousemove', function() { g_lightColor[2] = this.value / 255.0;});
+
+  document.getElementById('pointX')?.addEventListener('mousemove', function() { lightX = this.value;});
+  document.getElementById('pointY')?.addEventListener('mousemove', function() { lightY = this.value;});
+  document.getElementById('pointZ')?.addEventListener('mousemove', function() { lightZ = this.value;});
 }
 
 // could not be bothered calculating these myself LOL - math from the textbook on calculating normals of a triangle
@@ -403,18 +469,25 @@ function main() {
     }
   });
 
-  canvas.addEventListener('mousedown', function(ev) {
-    g_lastX = ev.x;
-    g_lastY = ev.y;
+  function onMouseMove(ev) {
+    g_cam.panRight(-ev.movementX * scale);
+    g_cam.panUp(ev.movementY * scale);
+  }
 
+  document.addEventListener('keydown', (ev) => {
+    g_keysPressed[ev.key.toLowerCase()] = true;
+  });
+
+  document.addEventListener('keyup', (ev) => {
+    g_keysPressed[ev.key.toLowerCase()] = false;
+  });
+
+  canvas.addEventListener('mousedown', function(ev) {
     if(ev.buttons == 1 && ev.shiftKey) {
       if(!upTop && !g_moving && !g_boneMoving) {
         g_moving = true;
         g_boneMoving = true;
 
-        g_boneX = -8;
-        g_boneY = -2;
-        g_boneZ = 0;
         g_boneAngleX = 180;
         g_boneAngleY = 0;
         g_boneAngleZ = 0;
@@ -436,34 +509,29 @@ function main() {
         flyUp();
       }
     }
+  });
 
+  canvas.onclick = function() {
+    canvas.requestPointerLock();
+  };
 
-  })
-
-  canvas.addEventListener('mousemove', function(ev) {if(ev.buttons == 1) {
-    var scale = 0.2;
-    angleX += (ev.x - g_lastX) * scale;
-    angleY += (ev.y - g_lastY) * scale;
-    g_lastX = ev.x;
-    g_lastY = ev.y;
-  }})
-
-  canvas.addEventListener('wheel', function(ev) {
-    ev.preventDefault();
-    g_Zoom += ev.deltaY / 100;
-  })
-  
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement === canvas) {
+      document.addEventListener("mousemove", onMouseMove, false);
+    } else {
+      document.removeEventListener("mousemove", onMouseMove, false);
+    }
+  }, false);
 
   // // Specify the color for clearing <canvas>
   // gl.clearColor(150/255,226/255,238/255, 1.0);
   gl.clearColor(0, 0, 0, 1.0);
 
   g_globalRotateMatrix = new Matrix4();
-  // perspective matrix using cuon-matrix lib
-  g_ViewProjection.setPerspective(90, canvas.width/canvas.height, 0.1, 1000);
   g_vulture = new Vulture();
   g_area = new Area();
   g_bone = new Bone();
+  g_cam = new Camera();
   
   requestAnimationFrame(tick);
 }
@@ -471,12 +539,21 @@ function main() {
 let g_pauseTime;
 
 function renderAllShapes() {
+  handleKeys();
+  g_cam.updateCamera();
+  gl.uniform3fv(u_camPos, g_cam.eye.elements);
+
   let now = performance.now();
   let nowSeconds = now / 1000;
   g_time = nowSeconds;
 
-  g_lightPos[0] = (Math.sin(nowSeconds * 1.25) * 10) - 15;
-  g_lightPos[2] = (Math.cos(nowSeconds * 1.25) * 10);
+  if(lightAnimated) {
+    g_lightPos = [0, 20, 0];
+    g_lightPos[0] = (Math.sin(nowSeconds * 1.25) * 10) - 15;
+    g_lightPos[2] = (Math.cos(nowSeconds * 1.25) * 10);
+  } else {
+    g_lightPos = [lightX, lightY, lightZ];
+  }
   gl.uniform3fv(u_lightPos, g_lightPos);
   gl.uniform3fv(u_lightColor, g_lightColor);
 
@@ -485,41 +562,28 @@ function renderAllShapes() {
   g_pauseTime = g_currentTime;
 
   // https://stackoverflow.com/questions/21603412/algorithm-3d-orbiting-camera-control-with-mouse-drag
-  
-  var cameraMatrix = new Matrix4();
-  cameraMatrix.translate(0, 0, -g_Zoom).rotate(angleY, 1, 0, 0).rotate(angleX, 0, 1, 0)
-  cameraMatrix.translate(-g_X + 2.5, -g_Y, -g_Z);
-
-  let invCameraMatrix = new Matrix4(cameraMatrix);
-  invCameraMatrix.invert();
-
-  let camPos = new Vector3([0, 0, 0]);
-  camPos = invCameraMatrix.multiplyVector3(camPos);
-  gl.uniform3fv(u_camPos, camPos.elements);
 
   // get vp matrix by multiplying them, and multiply by model in shader
-  var finalMat = new Matrix4().set(g_ViewProjection);
-  finalMat.multiply(cameraMatrix);
+  var finalMat = new Matrix4().set(g_cam.projectionMatrix);
+  finalMat.multiply(g_cam.viewMatrix);
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, finalMat.elements);
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  if(g_normalDisplay) {
-    gl.uniform1f(u_displayType, 0.0);
-  } else {
-    gl.uniform1f(u_displayType, 1.0);
-  }
+  gl.uniform1f(u_displayType, g_lightType);
 
   g_area.render();
   g_vulture.render();
   drawIcoSphere(new Matrix4().translate(-4, 10, 0).scale(2, 2, 2));
-  gl.uniform1f(u_displayType, 2.0);
-  applyColor([1.0, 1.0, 1.0, 1.0]);
-  drawAltCube(new Matrix4().translate(g_lightPos[0], g_lightPos[1], g_lightPos[2]).scale(0.5, 0.5, 0.5));
-
+  applyColor([0.75, 0.25, 0.25, 1.0]);
+  drawIcoSphere(new Matrix4().translate(-15, -315, 0).scale(300, 300, 300));
   if(g_boneMoving) {
     g_bone.render();
   }
+
+  gl.uniform1f(u_displayType, 2.0);
+  applyColor([g_lightColor[0], g_lightColor[1], g_lightColor[2], 1.0]);
+  drawAltCube(new Matrix4().translate(g_lightPos[0], g_lightPos[1], g_lightPos[2]).scale(0.5, 0.5, 0.5));
 
   sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000/frameTime).toFixed(2));
 

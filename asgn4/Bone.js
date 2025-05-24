@@ -86,9 +86,9 @@ class Bone {
     
         applyColor(boneColor);
         this.newM.scale(4/3, 1/5, 4/3);
-        this.newM.translate(-0.6, 5, 0).scale(0.45, 0.45, 0.45);
+        this.newM.translate(-0.6, 5, 0).scale(0.5, 0.5, 0.5);
         drawIcoSphere(this.newM);
-        this.newM.translate(2, 0, 0).scale(1.5, 1.5, 1.5);
+        this.newM.translate(2, 0, 0).scale(3, 3, 3);
         drawIcoSphere(this.newM);
     }
 }
