@@ -31,28 +31,33 @@ var FSHADER_SOURCE =
 
   const float ambientCoefficient = 0.2;
   const float specularCoefficient = 64.0;
-  uniform vec3 spotDirection;
-  const float spotCosineCutoff = 0.75;
 
   varying vec3 v_normalOut;
-  varying vec3 v_lightPosOut;
-  varying vec3 v_lightPosOut2;
   varying vec3 v_vertexPos;
   uniform vec3 u_camPos;
   uniform vec4 u_FragColor;
+
+  varying vec3 v_lightPosOut;
   uniform vec3 u_lightColor;
   uniform vec3 u_lightPos;
+
+  varying vec3 v_lightPosOut2;
   uniform vec3 u_lightColor2;
+  uniform vec3 u_spotDirection;
   uniform vec3 u_lightPos2;
+  uniform float u_radius;
+
   uniform float u_displayType;
 
   void main() {
     if(u_displayType == 1.0) {
       vec3 lightDir = normalize(v_lightPosOut);
+
       vec3 lightDir2 = normalize(v_lightPosOut2);
 
       // diffuse component
       vec3 diffuse = u_lightColor * max(0.0, dot(v_normalOut, lightDir));
+
       vec3 diffuse2 = u_lightColor2 * max(0.0, dot(v_normalOut, lightDir2));
       
       // ambient component
@@ -61,14 +66,24 @@ var FSHADER_SOURCE =
       // specular component
       vec3 viewDir = normalize(u_camPos - v_vertexPos);
       vec3 ref = reflect(-lightDir, v_normalOut);
-      float spec = max(0.0, dot(normalize(u_camPos), ref));
+      float spec = max(0.0, dot(normalize(viewDir), ref));
       spec = pow(spec, specularCoefficient);
       vec3 specular = u_lightColor * spec;
 
       vec3 ref2 = reflect(-lightDir2, v_normalOut);
-      float spec2 = max(0.0, dot(normalize(u_camPos), ref2));
+      float spec2 = max(0.0, dot(normalize(viewDir), ref2));
       spec2 = pow(spec2, specularCoefficient);
       vec3 specular2 = u_lightColor2 * spec2;
+
+      vec3 spotDir = normalize(u_spotDirection);
+      vec3 fragToLight = -normalize(v_lightPosOut2);
+
+      float theta = dot(fragToLight, spotDir);
+      float epsilon = 0.0; // for smooth edge
+      float intensity = smoothstep(u_radius, u_radius, theta);
+
+      diffuse2 *= intensity;
+      specular2 *= intensity;
 
       gl_FragColor = vec4(u_FragColor.xyz * clamp((ambient + (diffuse + diffuse2) * 0.75 + (specular + specular2)), vec3(0.0), vec3(1.0)), 1.0);
     } else if (u_displayType == 0.0) {
@@ -92,16 +107,19 @@ let u_lightColor;
 let u_lightPos2;
 let u_lightColor2;
 let u_camPos;
-let u_spotDirection;
-
+let u_spotLightRadius;
+let u_spotLightDirection;
 
 let g_cam = null;
+let g_spotLightRadius = 0.9;
 
 let g_vulture;
 let g_area;
 let g_bone;
 let g_lightPos = [0, 20, 0];
-let g_spotLightPos = [30, 20, 0];
+let g_spotLightPos = [-35, 30, 0];
+let g_spotLightDir = [-35, 25, 0];
+let g_spotLightColor = [1.0, 1.0, 1.0];
 let g_lightColor = [1.0, 1.0, 1.0];
 
 let g_currentTime = -1;
@@ -126,10 +144,6 @@ function setupWebGL() {
     }
 
     gl.enable(gl.DEPTH_TEST);
-}
-
-function calculateSpotDirection() {
-
 }
 
 let g_keysPressed = {};
@@ -218,6 +232,18 @@ function connectVariablesToGLSL() {
     console.log('Failed to get the storage location of u_camPos');
     return;
   }
+
+  u_spotLightRadius = gl.getUniformLocation(gl.program, 'u_radius');
+  if (!u_spotLightRadius) {
+    console.log('Failed to get the storage location of u_spotLightRadius');
+    return;
+  }
+
+  u_spotLightDirection = gl.getUniformLocation(gl.program, 'u_spotDirection');
+  if (!u_spotLightDirection) {
+    console.log('Failed to get the storage location of u_spotLightDirection');
+    return;
+  }
 }
 
 let lightX = 0;
@@ -245,6 +271,20 @@ function addActionsForHtmlUI() {
   document.getElementById('pointX')?.addEventListener('mousemove', function() { lightX = this.value;});
   document.getElementById('pointY')?.addEventListener('mousemove', function() { lightY = this.value;});
   document.getElementById('pointZ')?.addEventListener('mousemove', function() { lightZ = this.value;});
+
+  document.getElementById('spotRed')?.addEventListener('mousemove', function() { g_spotLightColor[0] = this.value / 255.0;});
+  document.getElementById('spotGreen')?.addEventListener('mousemove', function() { g_spotLightColor[1] = this.value / 255.0;});
+  document.getElementById('spotBlue')?.addEventListener('mousemove', function() { g_spotLightColor[2] = this.value / 255.0;});
+
+  document.getElementById('spotX')?.addEventListener('mousemove', function() { g_spotLightPos[0] = this.value;});
+  document.getElementById('spotY')?.addEventListener('mousemove', function() { g_spotLightPos[1] = this.value;});
+  document.getElementById('spotZ')?.addEventListener('mousemove', function() { g_spotLightPos[2] = this.value;});
+
+  document.getElementById('spotDX')?.addEventListener('mousemove', function() { g_spotLightDir[0] = this.value;});
+  document.getElementById('spotDY')?.addEventListener('mousemove', function() { g_spotLightDir[1] = this.value;});
+  document.getElementById('spotDZ')?.addEventListener('mousemove', function() { g_spotLightDir[2] = this.value;});
+
+  document.getElementById('spotRad')?.addEventListener('mousemove', function() { g_spotLightRadius = this.value;});
 }
 
 // could not be bothered calculating these myself LOL - math from the textbook on calculating normals of a triangle
@@ -269,18 +309,6 @@ function createCubeNormals() {
   return out;
 }
 
-let g_icoVerts = [];
-
-function addVertsFromIndices(tIndices) {
-  for(let j = 0; j < 3; j++) {
-    for(let k = 0; k < 3; k++) {
-      cubeArray.push(g_icoVerts[tIndices[j]][k]);
-    }
-  }
-}
-
-let subdivisions = 3;
-
 // http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
 function addIcoSphereVertices() {
   var t = (1.0 + Math.sqrt(5.0)) / 2.0;
@@ -303,12 +331,11 @@ function addIcoSphereVertices() {
     [4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]
   ];
 
-  const middlePointCache = {};
+
   function getMiddlePoint(i1, i2) {
-    // Order indices to avoid duplicates
+    let middlePointCache = {};
     const key = i1 < i2 ? `${i1}_${i2}` : `${i2}_${i1}`;
     if (middlePointCache[key] !== undefined) return middlePointCache[key];
-    // Calculate midpoint and normalize
     const v1 = verts[i1], v2 = verts[i2];
     const mid = [
       (v1[0] + v2[0]) / 2,
@@ -323,7 +350,7 @@ function addIcoSphereVertices() {
     return idx;
   }
 
-  for (let i = 0; i < subdivisions; i++) {
+  for (let i = 0; i < 3; i++) {
     const newFaces = [];
     for (const [a, b, c] of faces) {
       const ab = getMiddlePoint(a, b);
@@ -536,8 +563,6 @@ function main() {
   requestAnimationFrame(tick);
 }
 
-let g_pauseTime;
-
 function renderAllShapes() {
   handleKeys();
   g_cam.updateCamera();
@@ -545,7 +570,22 @@ function renderAllShapes() {
 
   let now = performance.now();
   let nowSeconds = now / 1000;
-  g_time = nowSeconds;
+
+  let spotDirection = [
+  g_spotLightDir[0] - g_spotLightPos[0],
+  g_spotLightDir[1] - g_spotLightPos[1],
+  g_spotLightDir[2] - g_spotLightPos[2]
+  ];
+  // Normalize
+  let len = Math.hypot(...spotDirection);
+  if (len > 0) spotDirection = spotDirection.map(x => x / len);
+
+  let u_spotDirection = gl.getUniformLocation(gl.program, 'u_spotDirection');
+  gl.uniform3fv(u_spotDirection, spotDirection);
+
+  gl.uniform1f(u_spotLightRadius, g_spotLightRadius);
+  gl.uniform3fv(u_lightPos2, g_spotLightPos);
+  gl.uniform3fv(u_lightColor2, g_spotLightColor);
 
   if(lightAnimated) {
     g_lightPos = [0, 20, 0];
@@ -584,6 +624,8 @@ function renderAllShapes() {
   gl.uniform1f(u_displayType, 2.0);
   applyColor([g_lightColor[0], g_lightColor[1], g_lightColor[2], 1.0]);
   drawAltCube(new Matrix4().translate(g_lightPos[0], g_lightPos[1], g_lightPos[2]).scale(0.5, 0.5, 0.5));
+  drawAltCube(new Matrix4().translate(g_spotLightPos[0], g_spotLightPos[1], g_spotLightPos[2]).scale(0.5, 0.5, 0.5));
+  drawAltCube(new Matrix4().translate(g_spotLightDir[0], g_spotLightDir[1], g_spotLightDir[2]).scale(0.5, 0.5, 0.5));
 
   sendTextToHTML("ms: " + frameTime.toFixed(2) + " fps: " + (1000/frameTime).toFixed(2));
 
