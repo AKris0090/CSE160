@@ -624,6 +624,7 @@ function renderAllShapes() {
   gl.uniform1f(u_displayType, 2.0);
   applyColor([g_lightColor[0], g_lightColor[1], g_lightColor[2], 1.0]);
   drawAltCube(new Matrix4().translate(g_lightPos[0], g_lightPos[1], g_lightPos[2]).scale(0.5, 0.5, 0.5));
+  applyColor([1.0, 1.0, 1.0, 1.0]);
   drawAltCube(new Matrix4().translate(g_spotLightPos[0], g_spotLightPos[1], g_spotLightPos[2]).scale(0.5, 0.5, 0.5));
   drawAltCube(new Matrix4().translate(g_spotLightDir[0], g_spotLightDir[1], g_spotLightDir[2]).scale(0.5, 0.5, 0.5));
 
