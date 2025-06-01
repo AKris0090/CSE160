@@ -6,6 +6,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 const scene = new THREE.Scene();
+scene.fog = new THREE.Fog( 0x000000, 10, 100 );
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
 const renderer = new THREE.WebGLRenderer();
@@ -15,18 +16,16 @@ document.body.appendChild( renderer.domElement );
 const controls = new OrbitControls( camera, renderer.domElement );
 const loader = new GLTFLoader();
 
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(0, 1, 1);
-scene.add(light);
+const light1 = new THREE.AmbientLight(0xffffff, 0.15);
+light1.position.set(0, 1, 1);
+scene.add(light1);
 
-const light2 = new THREE.DirectionalLight(0xffffff, 1);
+const light2 = new THREE.DirectionalLight(0xffffff, 0.75);
 light2.position.set(0, -1, -1);
 scene.add(light2);
 
-camera.position.set( 0, 20, 100 );
+camera.position.set( -5.4573620940483742, 1.7577326054177187, -4.168598382089788 );
 controls.update();
-
-camera.position.z = 5;
 
 const featherParticleSystem = new FeatherParticleSystem(THREE, scene, loader);
 
@@ -43,13 +42,164 @@ composer.addPass(bloomPass);
 loader.load(
     "models/angel.glb",
     (gltf) => {
+        gltf.scene.traverse ( function ( child ) {
+        });
         scene.add( gltf.scene );
+    }
+);
+
+loader.load(
+    "models/fox.glb",
+    (gltf) => {
+        gltf.scene.position.set(0, 1.5, 0);
+        scene.add( gltf.scene );
+    }
+);
+
+const furTexture = new THREE.TextureLoader().load("models/Fox_BaseColor.png");
+furTexture.encoding = THREE.sRGBEncoding;
+furTexture.flipY = false;
+
+renderer.outputEncoding = THREE.sRGBEncoding; 
+
+const shellCount = 7;
+
+const customUniforms = {
+    shellCount: { value: shellCount },
+    furLength: { value: 1.0 },
+    furTexture: { value: furTexture },
+    shrinkFactor: { value: 0.05 },
+};
+
+const customMaterial = new THREE.ShaderMaterial({
+    uniforms: THREE.UniformsUtils.merge( [
+				THREE.UniformsLib[ 'fog' ], customUniforms
+      ] ),
+    vertexShader: `
+        precision mediump float;
+        
+        varying vec3 vWorldPos;
+        varying vec3 vCenter;
+        varying vec2 vUv;
+
+        attribute vec3 triangleCenter;
+
+        uniform float shellCount;
+        uniform float furLength;
+        varying float vShellIndex;
+
+        #include <fog_pars_vertex>
+
+        void main() {
+            #include <begin_vertex>
+            #include <project_vertex>
+            #include <fog_vertex>
+
+            float shellIndex = float(gl_InstanceID);
+            vShellIndex = shellIndex;
+
+            vec3 furOffset = normal * furLength * (shellIndex / shellCount);
+
+            vec3 displaced = position + furOffset;
+
+            #ifdef USE_INSTANCING
+                vec4 worldPos = instanceMatrix * vec4(displaced, 1.0);
+                vec4 worldCenter = instanceMatrix * vec4(triangleCenter + furOffset, 1.0);
+            #endif
+
+            vWorldPos = worldPos.xyz;
+            vCenter = worldCenter.xyz;
+
+            gl_Position = projectionMatrix * viewMatrix * worldPos;
+            vUv = uv;
+        }
+    `,
+    fragmentShader: `
+        precision mediump float;
+        uniform sampler2D furTexture;
+        uniform float shellCount;
+        uniform float shrinkFactor;
+        varying float vShellIndex;
+
+        #include <fog_pars_fragment>
+
+        varying vec2 vUv;
+        varying vec3 vWorldPos;
+        varying vec3 vCenter;
+
+        void main() {
+            float maxDist = shrinkFactor * (shellCount - 1.0 - vShellIndex);
+            float dist = distance(vWorldPos, vCenter);
+
+            if (dist > maxDist) {
+                discard;
+            }
+
+            vec4 fur = texture2D(furTexture, vUv);
+            gl_FragColor = vec4(fur.rgb * 0.1, 1.0);
+            #include <fog_fragment>
+        }
+    `,
+    fog: true,
+});
+
+let furInstancedMesh;
+
+function createTriangleCenters(originalGeometry) {
+    const geometry = originalGeometry.toNonIndexed();
+
+    const posAttr = geometry.getAttribute('position');
+    const triangleCenters = [];
+
+    for (let i = 0; i < posAttr.count; i += 3) {
+        const v0 = new THREE.Vector3().fromBufferAttribute(posAttr, i);
+        const v1 = new THREE.Vector3().fromBufferAttribute(posAttr, i + 1);
+        const v2 = new THREE.Vector3().fromBufferAttribute(posAttr, i + 2);
+
+        const center = new THREE.Vector3()
+            .add(v0).add(v1).add(v2)
+            .multiplyScalar(1 / 3);
+
+        for (let j = 0; j < 3; j++) {
+            triangleCenters.push(center.x, center.y, center.z);
+        }
+    }
+
+    geometry.setAttribute('triangleCenter', new THREE.Float32BufferAttribute(triangleCenters, 3));
+    return geometry;
+}
+
+loader.load(
+    "models/foxfur.glb",
+    (gltf) => {
+        gltf.scene.traverse ( function ( child ) {
+            let mesh;
+            if ( child.isMesh ) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                mesh = child;
+            }
+
+            if (mesh) {
+                const geo = createTriangleCenters(mesh.geometry);
+                furInstancedMesh = new THREE.InstancedMesh(geo, customMaterial, shellCount);
+
+                for (let i = 0; i < shellCount; i++) {
+                    let m = new THREE.Matrix4();
+                    m.makeTranslation(0, 1.5, i * 0.05);
+                    furInstancedMesh.setMatrixAt(i, m.clone().multiply(mesh.matrixWorld));
+                }
+
+                furInstancedMesh.instanceMatrix.needsUpdate = true;
+                scene.add(furInstancedMesh);
+            }
+        });
     }
 );
 
 function animate() {
     controls.update();
-    featherParticleSystem.render(THREE);
+    featherParticleSystem.render();
     composer.render();
 }
 
