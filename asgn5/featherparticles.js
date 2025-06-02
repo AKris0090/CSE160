@@ -42,7 +42,7 @@ class FeatherParticleSystem {
             this.featherParticleMatrices.push(new this.THREE.Matrix4());
             this.featherParticleAngles.push(Math.random() * Math.PI * 2);
             this.featherSpeeds.push(Math.random() * 0.2 + 0.05);
-            this.featherScales.push(new this.THREE.Vector3(1, 1, 1).multiplyScalar(Math.random() * 2 + 0.5));
+            this.featherScales.push(new this.THREE.Vector3(1, 1, 1).multiplyScalar(Math.random() * 1.75 + 0.5));
         }
     }
 

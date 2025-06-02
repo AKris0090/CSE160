@@ -60,6 +60,7 @@ loader.load(
     "models/chain.glb",
     (gltf) => {
         gltf.scene.position.set(6.605, -20.183, 10.319);
+        gltf.scene.rotation.set(0, 0, degToRad(5.99));
         gltf.scene.scale.set(1.846, 1.846, 1.846);
         scene.add( gltf.scene );
     }
@@ -78,6 +79,7 @@ const customUniforms = {
     furLength: { value: 1.25 },
     furTexture: { value: furTexture },
     shrinkFactor: { value: 0.05 },
+    time: { value: 0 },
 };
 
 const customMaterial = new THREE.ShaderMaterial({
@@ -95,9 +97,51 @@ const customMaterial = new THREE.ShaderMaterial({
 
         uniform float shellCount;
         uniform float furLength;
+        uniform float time;
         varying float vShellIndex;
 
         #include <fog_pars_vertex>
+        #define PI 3.141592653589
+
+        float rand(vec2 c){
+        	return fract(sin(dot(c.xy ,vec2(12.9898,78.233))) * 43758.5453);
+        }
+
+        float noise(vec2 p, float freq ){
+        	float unit = 1920.0/freq;
+        	vec2 ij = floor(p/unit);
+        	vec2 xy = mod(p,unit)/unit;
+        	//xy = 3.*xy*xy-2.*xy*xy*xy;
+        	xy = .5*(1.-cos(PI*xy));
+        	float a = rand((ij+vec2(0.,0.)));
+        	float b = rand((ij+vec2(1.,0.)));
+        	float c = rand((ij+vec2(0.,1.)));
+        	float d = rand((ij+vec2(1.,1.)));
+        	float x1 = mix(a, b, xy.x);
+        	float x2 = mix(c, d, xy.x);
+        	return mix(x1, x2, xy.y);
+        }
+
+        float pNoise(vec2 p, int res){
+        	float persistance = .5;
+        	float n = 0.;
+        	float normK = 0.;
+        	float f = 4.;
+        	float amp = 1.;
+        	int iCount = 0;
+        	for (int i = 0; i<50; i++){
+        		n+=amp*noise(p, f);
+        		f*=2.;
+        		normK+=amp;
+        		amp*=persistance;
+        		if (iCount == res) break;
+        		iCount++;
+        	}
+        	float nf = n/normK;
+        	return nf*nf*nf*nf;
+        }
+
+        varying float vNoise;
 
         void main() {
             #include <begin_vertex>
@@ -107,7 +151,11 @@ const customMaterial = new THREE.ShaderMaterial({
             float shellIndex = float(gl_InstanceID);
             vShellIndex = shellIndex;
 
-            vec3 furOffset = normal * furLength * (shellIndex / shellCount);
+            // multiply time to speed
+            float noise = pNoise((position.xz * 50.0) - vec2(time * 350.0), 350);
+            float zScale = 0.1 + (pow(position.z, 2.75) * 0.000075);
+
+            vec3 furOffset = (normal + (normal * vec3(0, noise * 2.0, noise * 2.5 + 2.0))) * zScale * furLength * (shellIndex / shellCount);
 
             vec3 displaced = position + furOffset;
 
@@ -211,7 +259,7 @@ loader.load(
 
 function animate() {
     featherParticleSystem.render();
-
+    if(furInstancedMesh) furInstancedMesh.material.uniforms.time.value += 0.01;
     composer.render();
 }
 
