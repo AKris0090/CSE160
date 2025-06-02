@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 function degToRad(degrees) {
@@ -19,6 +20,7 @@ renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
 const loader = new GLTFLoader();
+// const controls = new OrbitControls(camera, renderer.domElement);
 
 const light1 = new THREE.AmbientLight(0xffffff, 0.15);
 light1.position.set(0, 1, 1);
@@ -34,9 +36,9 @@ const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    1.5, // strength
-    1, // radius
-    0 // threshold
+    1.5,
+    1,
+    0
 );
 composer.addPass(bloomPass);
 
@@ -66,7 +68,17 @@ loader.load(
     }
 );
 
-const furTexture = new THREE.TextureLoader().load("models/Fox_BaseColor.png");
+const textureLoader = new THREE.TextureLoader();
+
+const texture = textureLoader.load(
+  'textures/hdri.png',
+  () => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    scene.background = texture;
+});
+
+const furTexture = textureLoader.load("models/Fox_BaseColor.png");
 furTexture.encoding = THREE.sRGBEncoding;
 furTexture.flipY = false;
 
@@ -258,6 +270,7 @@ loader.load(
 );
 
 function animate() {
+    //controls.update();
     featherParticleSystem.render();
     if(furInstancedMesh) furInstancedMesh.material.uniforms.time.value += 0.01;
     composer.render();
