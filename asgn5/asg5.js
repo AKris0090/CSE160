@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -12,14 +11,13 @@ function degToRad(degrees) {
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog( 0x000000, 10, 100 );
 const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 1000 );
-camera.position.set( -12.591, 8.618, -7.572 );
-camera.setRotationFromEuler( new THREE.Euler( degToRad(-156.90), degToRad(-31.84), degToRad(-167.32), 'XYZ' ) );
+camera.position.set( -18.335, 8.110, -8.524 );
+camera.setRotationFromEuler( new THREE.Euler( degToRad(-162.79), degToRad(-33.54), degToRad(-170.29), 'XYZ' ) );
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-// const controls = new OrbitControls( camera, renderer.domElement );
 const loader = new GLTFLoader();
 
 const light1 = new THREE.AmbientLight(0xffffff, 0.15);
@@ -29,9 +27,6 @@ scene.add(light1);
 const light2 = new THREE.DirectionalLight(0xffffff, 0.75);
 light2.position.set(0, -1, -1);
 scene.add(light2);
-
-// camera.position.set( -5.4573620940483742, 1.7577326054177187, -4.168598382089788 );
-// controls.update();
 
 const featherParticleSystem = new FeatherParticleSystem(THREE, scene, loader);
 
@@ -80,7 +75,7 @@ const shellCount = 10;
 
 const customUniforms = {
     shellCount: { value: shellCount },
-    furLength: { value: 1.0 },
+    furLength: { value: 1.25 },
     furTexture: { value: furTexture },
     shrinkFactor: { value: 0.05 },
 };
@@ -215,7 +210,6 @@ loader.load(
 );
 
 function animate() {
-    // controls.update();
     featherParticleSystem.render();
 
     composer.render();
