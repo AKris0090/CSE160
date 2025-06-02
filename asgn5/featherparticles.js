@@ -3,8 +3,8 @@ class FeatherParticleSystem {
         this.THREE = THREE;
         this.scene = scene;
         this.count = 150;
-        this.spawnPoint = [0, 100, 50];
-        this.spawnArea = 100;
+        this.spawnPoint = [0, 100, 30];
+        this.spawnArea = 150;
 
         this.featherParticlePositions = [];
         this.featherParticleMatrices = [];

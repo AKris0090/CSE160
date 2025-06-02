@@ -5,15 +5,21 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
+function degToRad(degrees) {
+    return degrees * (Math.PI / 180);
+}
+
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog( 0x000000, 10, 100 );
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 1000 );
+camera.position.set( -12.591, 8.618, -7.572 );
+camera.setRotationFromEuler( new THREE.Euler( degToRad(-156.90), degToRad(-31.84), degToRad(-167.32), 'XYZ' ) );
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-const controls = new OrbitControls( camera, renderer.domElement );
+// const controls = new OrbitControls( camera, renderer.domElement );
 const loader = new GLTFLoader();
 
 const light1 = new THREE.AmbientLight(0xffffff, 0.15);
@@ -24,8 +30,8 @@ const light2 = new THREE.DirectionalLight(0xffffff, 0.75);
 light2.position.set(0, -1, -1);
 scene.add(light2);
 
-camera.position.set( -5.4573620940483742, 1.7577326054177187, -4.168598382089788 );
-controls.update();
+// camera.position.set( -5.4573620940483742, 1.7577326054177187, -4.168598382089788 );
+// controls.update();
 
 const featherParticleSystem = new FeatherParticleSystem(THREE, scene, loader);
 
@@ -51,7 +57,15 @@ loader.load(
 loader.load(
     "models/fox.glb",
     (gltf) => {
-        gltf.scene.position.set(0, 1.5, 0);
+        scene.add( gltf.scene );
+    }
+);
+
+loader.load(
+    "models/chain.glb",
+    (gltf) => {
+        gltf.scene.position.set(6.605, -20.183, 10.319);
+        gltf.scene.scale.set(1.846, 1.846, 1.846);
         scene.add( gltf.scene );
     }
 );
@@ -62,7 +76,7 @@ furTexture.flipY = false;
 
 renderer.outputEncoding = THREE.sRGBEncoding; 
 
-const shellCount = 7;
+const shellCount = 10;
 
 const customUniforms = {
     shellCount: { value: shellCount },
@@ -136,7 +150,7 @@ const customMaterial = new THREE.ShaderMaterial({
             }
 
             vec4 fur = texture2D(furTexture, vUv);
-            gl_FragColor = vec4(fur.rgb * 0.1, 1.0);
+            gl_FragColor = vec4(vec3(fur.r + 0.145, fur.g + 0.1, fur.b) * 0.125, 1.0);
             #include <fog_fragment>
         }
     `,
@@ -169,6 +183,8 @@ function createTriangleCenters(originalGeometry) {
     return geometry;
 }
 
+let meshMatrices = [];
+
 loader.load(
     "models/foxfur.glb",
     (gltf) => {
@@ -186,7 +202,8 @@ loader.load(
 
                 for (let i = 0; i < shellCount; i++) {
                     let m = new THREE.Matrix4();
-                    m.makeTranslation(0, 1.5, i * 0.05);
+                    m.makeTranslation(0, 0.0, i * 0.05);
+                    meshMatrices.push(mesh.matrixWorld.clone());
                     furInstancedMesh.setMatrixAt(i, m.clone().multiply(mesh.matrixWorld));
                 }
 
@@ -198,8 +215,9 @@ loader.load(
 );
 
 function animate() {
-    controls.update();
+    // controls.update();
     featherParticleSystem.render();
+
     composer.render();
 }
 
