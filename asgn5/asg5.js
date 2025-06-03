@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls  } from 'three/addons/controls/PointerLockControls.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 function degToRad(degrees) {
@@ -12,8 +12,6 @@ function degToRad(degrees) {
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog( 0x000000, 20, 100 );
 const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 1000 );
-camera.position.set( -18.335, 8.110, -8.524 );
-camera.setRotationFromEuler( new THREE.Euler( degToRad(-162.79), degToRad(-33.54), degToRad(-170.29), 'XYZ' ) );
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
@@ -21,6 +19,14 @@ document.body.appendChild( renderer.domElement );
 
 const loader = new GLTFLoader();
 // const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new PointerLockControls(camera, renderer.domElement);
+scene.add(controls.getObject());
+document.body.addEventListener('click', () => {
+    controls.lock();
+});
+
+camera.position.set( -18.335, 8.110, -8.524 );
+camera.setRotationFromEuler( new THREE.Euler( degToRad(-162.79), degToRad(-33.54), degToRad(-170.29), 'XYZ' ) );
 
 const light1 = new THREE.AmbientLight(0xffffff, 0.15);
 light1.position.set(0, 1, 1);
@@ -42,18 +48,32 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
-// loader.load(
-//     "models/angel.glb",
-//     (gltf) => {
-//         gltf.scene.traverse ( function ( child ) {
-//         });
-//         scene.add( gltf.scene );
-//     }
-// );
-
 loader.load(
     "models/fox.glb",
     (gltf) => {
+        scene.add( gltf.scene );
+    }
+);
+
+loader.load(
+    "models/cube.glb",
+    (gltf) => {
+        gltf.scene.position.set(-2, 0, 0);
+        scene.add( gltf.scene );
+    }
+);
+
+loader.load(
+    "models/cone.glb",
+    (gltf) => {
+        scene.add( gltf.scene );
+    }
+);
+
+loader.load(
+    "models/torus.glb",
+    (gltf) => {
+        gltf.scene.position.set(2, 0, 0);
         scene.add( gltf.scene );
     }
 );
@@ -269,8 +289,54 @@ loader.load(
     }
 );
 
+let prevTime = performance.now();
+
+const move = { forward: false, backward: false, left: false, right: false, up: false, down: false };
+const velocity = new THREE.Vector3();
+const speed = 10; // units per second
+
+document.addEventListener('keydown', (event) => {
+    switch (event.code) {
+        case 'KeyW': move.forward = true; break;
+        case 'KeyS': move.backward = true; break;
+        case 'KeyA': move.left = true; break;
+        case 'KeyD': move.right = true; break;
+        case 'KeyQ': move.up = true; break;
+        case 'KeyE': move.down = true; break;
+    }
+});
+document.addEventListener('keyup', (event) => {
+    switch (event.code) {
+        case 'KeyW': move.forward = false; break;
+        case 'KeyS': move.backward = false; break;
+        case 'KeyA': move.left = false; break;
+        case 'KeyD': move.right = false; break;
+        case 'KeyQ': move.up = false; break;
+        case 'KeyE': move.down = false; break;
+    }
+});
+
+
 function animate() {
-    //controls.update();
+    const currentTime = performance.now();
+    const delta = (currentTime - prevTime) / 1000;
+    prevTime = currentTime;
+    
+    // Movement logic
+    velocity.set(0, 0, 0);
+    if (move.forward) velocity.z += 1;
+    if (move.backward) velocity.z -= 1;
+    if (move.left) velocity.x -= 1;
+    if (move.right) velocity.x += 1;
+    if (move.up) velocity.y -= 1;
+    if (move.down) velocity.y += 1;
+    velocity.normalize().multiplyScalar(speed * delta);
+
+    // Move the camera using controls
+    controls.moveRight(velocity.x);
+    controls.getObject().position.y += velocity.y;
+    controls.moveForward(velocity.z);
+
     featherParticleSystem.render();
     if(furInstancedMesh) furInstancedMesh.material.uniforms.time.value += 0.01;
     composer.render();
