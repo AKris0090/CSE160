@@ -10,7 +10,7 @@ function degToRad(degrees) {
 }
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog( 0x000000, 10, 100 );
+scene.fog = new THREE.Fog( 0x000000, 20, 100 );
 const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 1000 );
 camera.position.set( -18.335, 8.110, -8.524 );
 camera.setRotationFromEuler( new THREE.Euler( degToRad(-162.79), degToRad(-33.54), degToRad(-170.29), 'XYZ' ) );
@@ -42,14 +42,14 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
-loader.load(
-    "models/angel.glb",
-    (gltf) => {
-        gltf.scene.traverse ( function ( child ) {
-        });
-        scene.add( gltf.scene );
-    }
-);
+// loader.load(
+//     "models/angel.glb",
+//     (gltf) => {
+//         gltf.scene.traverse ( function ( child ) {
+//         });
+//         scene.add( gltf.scene );
+//     }
+// );
 
 loader.load(
     "models/fox.glb",
