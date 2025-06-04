@@ -5,21 +5,21 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { PointerLockControls  } from 'three/addons/controls/PointerLockControls.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
+// Helper functions
 function degToRad(degrees) {
     return degrees * (Math.PI / 180);
 }
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog( 0x000000, 20, 100 );
 const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+document.getElementById('threejs-container').appendChild(renderer.domElement);
+renderer.outputEncoding = THREE.sRGBEncoding; 
 
-const loader = new GLTFLoader();
 const controls = new PointerLockControls(camera, renderer.domElement);
-scene.add(controls.getObject());
+scene.add(controls.object);
 document.body.addEventListener('click', () => {
     controls.lock();
 });
@@ -27,6 +27,8 @@ document.body.addEventListener('click', () => {
 camera.position.set( -18.335, 8.110, -8.524 );
 camera.setRotationFromEuler( new THREE.Euler( degToRad(-162.79), degToRad(-33.54), degToRad(-170.29), 'XYZ' ) );
 
+// Lighting setup
+scene.fog = new THREE.Fog( 0x000000, 20, 100 );
 const light1 = new THREE.AmbientLight(0xffa500, 0.15);
 light1.position.set(0, 1, 1);
 scene.add(light1);
@@ -35,18 +37,13 @@ const light2 = new THREE.DirectionalLight(0xffffff, 0.75);
 light2.position.set(0, -1, -1);
 scene.add(light2);
 
-const light3 = new THREE.PointLight(0xffa500, 5.0);
-light3.position.set(-0.406, 8.885, 20.859);
-scene.add(light3);
-
 const light4 = new THREE.SpotLight(0xffa500, 105.0);
 light4.position.set(5.00, 10.00, 7.5);
 light4.angle = 0.314;
 light4.penumbra = 0.0;
 scene.add(light4);
 
-const featherParticleSystem = new FeatherParticleSystem(THREE, scene, loader);
-
+// Effect composer setup for single bloom pass
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloomPass = new UnrealBloomPass(
@@ -57,6 +54,27 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
+// Load textures
+const textureLoader = new THREE.TextureLoader();
+const texture = textureLoader.load(
+  'textures/hdri.png',
+  () => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    scene.background = texture;
+});
+const furTexture = textureLoader.load("textures/Fox_BaseColor.png");
+furTexture.encoding = THREE.sRGBEncoding;
+furTexture.flipY = false;
+const checkTexture = textureLoader.load("textures/check.png");
+checkTexture.colorSSpace = THREE.SRGBColorSpace;
+
+const checkMaterial = new THREE.MeshBasicMaterial({
+    map: checkTexture,
+});
+
+// Load models
+const loader = new GLTFLoader();
 loader.load(
     "models/fox.glb",
     (gltf) => {
@@ -78,8 +96,14 @@ let cube;
 loader.load(
     "models/cube.glb",
     (gltf) => {
+        gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+                child.material = checkMaterial;
+            }
+        });
         cube = gltf.scene;
-        gltf.scene.position.set(-2, 0, 0);
+        gltf.scene.scale.set(0.75, 0.75, 0.75);
+        gltf.scene.position.set(-3, 0, 0);
         scene.add( gltf.scene );
     }
 );
@@ -88,6 +112,11 @@ let cone;
 loader.load(
     "models/cone.glb",
     (gltf) => {
+        gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+                child.material = checkMaterial;
+            }
+        });
         cone = gltf.scene;
         scene.add( gltf.scene );
     }
@@ -97,6 +126,11 @@ let torus;
 loader.load(
     "models/torus.glb",
     (gltf) => {
+        gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+                child.material = checkMaterial;
+            }
+        });
         torus = gltf.scene;
         gltf.scene.position.set(2, 0, 0);
         scene.add( gltf.scene );
@@ -113,24 +147,13 @@ loader.load(
     }
 );
 
-const textureLoader = new THREE.TextureLoader();
+// Load feather particle system
+const featherParticleSystem = new FeatherParticleSystem(THREE, scene, loader);
 
-const texture = textureLoader.load(
-  'textures/hdri.png',
-  () => {
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    texture.colorSpace = THREE.SRGBColorSpace;
-    scene.background = texture;
-});
-
-const furTexture = textureLoader.load("models/Fox_BaseColor.png");
-furTexture.encoding = THREE.sRGBEncoding;
-furTexture.flipY = false;
-
-renderer.outputEncoding = THREE.sRGBEncoding; 
-
+// Fur shader material
 const shellCount = 10;
 
+// Uniforms for fur shader
 const customUniforms = {
     shellCount: { value: shellCount },
     furLength: { value: 1.25 },
@@ -139,7 +162,7 @@ const customUniforms = {
     time: { value: 0 },
 };
 
-const customMaterial = new THREE.ShaderMaterial({
+const furMaterial = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge( [
 				THREE.UniformsLib[ 'fog' ], customUniforms
       ] ),
@@ -150,6 +173,7 @@ const customMaterial = new THREE.ShaderMaterial({
         varying vec3 vCenter;
         varying vec2 vUv;
 
+        // Triangle center passed in as an attribute for each vertex
         attribute vec3 triangleCenter;
 
         uniform float shellCount;
@@ -179,6 +203,7 @@ const customMaterial = new THREE.ShaderMaterial({
         	return mix(x1, x2, xy.y);
         }
 
+        // Perlin noise function from: https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
         float pNoise(vec2 p, int res){
         	float persistance = .5;
         	float n = 0.;
@@ -201,21 +226,24 @@ const customMaterial = new THREE.ShaderMaterial({
         varying float vNoise;
 
         void main() {
+            // Apply fog to vertex position
             #include <begin_vertex>
             #include <project_vertex>
             #include <fog_vertex>
 
             float shellIndex = float(gl_InstanceID);
-            vShellIndex = shellIndex;
+            vShellIndex = shellIndex; // so that fragment shader can access
 
             // multiply time to speed
             float noise = pNoise((position.xz * 50.0) - vec2(time * 350.0), 350);
-            float zScale = 0.1 + (pow(position.z, 2.75) * 0.000075);
+            float zScale = 0.1 + (pow(position.z, 2.75) * 0.000075); // Adjust fur length exponentially based on position.z.
 
+            // Calculate the fur offset (length) based on the normal and noise
             vec3 furOffset = (normal + (normal * vec3(0, noise * 2.0, noise * 2.5 + 2.0))) * zScale * furLength * (shellIndex / shellCount);
 
             vec3 displaced = position + furOffset;
 
+            // Calculate the world position and world space triangle center (IMPORTANT - triangle center also needs to be translated by furOffset)
             #ifdef USE_INSTANCING
                 vec4 worldPos = instanceMatrix * vec4(displaced, 1.0);
                 vec4 worldCenter = instanceMatrix * vec4(triangleCenter + furOffset, 1.0);
@@ -242,9 +270,12 @@ const customMaterial = new THREE.ShaderMaterial({
         varying vec3 vCenter;
 
         void main() {
+            // Calculate the maximum radius for the fur shell based on the shell index
             float maxDist = shrinkFactor * (shellCount - 1.0 - vShellIndex);
             float dist = distance(vWorldPos, vCenter);
 
+            // If the distance is greater than the maximum radius, discard the fragment
+            // This creates a shell effect where fur shells shrink as they go outward
             if (dist > maxDist) {
                 discard;
             }
@@ -258,7 +289,7 @@ const customMaterial = new THREE.ShaderMaterial({
 });
 
 let furInstancedMesh;
-
+// Function to calculate the center of each triangle in the geometry hook it up to triangle attribute
 function createTriangleCenters(originalGeometry) {
     const geometry = originalGeometry.toNonIndexed();
 
@@ -283,26 +314,25 @@ function createTriangleCenters(originalGeometry) {
     return geometry;
 }
 
+// Create the instanced mesh for fur. Each instance will represent a shell of fur.
 let meshMatrices = [];
-
 loader.load(
     "models/foxfur.glb",
     (gltf) => {
         gltf.scene.traverse ( function ( child ) {
             let mesh;
             if ( child.isMesh ) {
-                child.castShadow = true;
                 child.receiveShadow = true;
                 mesh = child;
             }
 
             if (mesh) {
                 const geo = createTriangleCenters(mesh.geometry);
-                furInstancedMesh = new THREE.InstancedMesh(geo, customMaterial, shellCount);
+                furInstancedMesh = new THREE.InstancedMesh(geo, furMaterial, shellCount);
 
                 for (let i = 0; i < shellCount; i++) {
                     let m = new THREE.Matrix4();
-                    m.makeTranslation(0, 0.0, i * 0.05);
+                    m.makeTranslation(0, 0.0, i * 0.05); // Push it a little in the z direction to create movement
                     meshMatrices.push(mesh.matrixWorld.clone());
                     furInstancedMesh.setMatrixAt(i, m.clone().multiply(mesh.matrixWorld));
                 }
@@ -316,9 +346,15 @@ loader.load(
 
 let prevTime = performance.now();
 
+// Camera implementation because three js is dumb and stupid and wont do it properly
 const move = { forward: false, backward: false, left: false, right: false, up: false, down: false };
 const velocity = new THREE.Vector3();
 const speed = 10;
+
+function resetCameraPosition() {
+    camera.position.set(-18.335, 8.110, -8.524);
+    camera.setRotationFromEuler(new THREE.Euler(degToRad(-162.79), degToRad(-33.54), degToRad(-170.29), 'XYZ'));
+}
 
 document.addEventListener('keydown', (event) => {
     switch (event.code) {
@@ -338,6 +374,7 @@ document.addEventListener('keyup', (event) => {
         case 'KeyD': move.right = false; break;
         case 'KeyQ': move.up = false; break;
         case 'KeyE': move.down = false; break;
+        case 'KeyR': resetCameraPosition(); break;
     }
 });
 
@@ -347,7 +384,7 @@ function animate() {
     const delta = (currentTime - prevTime) / 1000;
     prevTime = currentTime;
 
-    // Rotate primitives
+    // Rotate primitive objects
     if (cube) cube.rotation.z += delta;
     if (cone) cone.rotation.y += delta;
     if (torus) torus.rotation.x += delta;
@@ -364,11 +401,11 @@ function animate() {
 
     // Move the camera using keyboard input
     controls.moveRight(velocity.x);
-    controls.getObject().position.y += velocity.y;
+    controls.object.position.y += velocity.y; // No move up/down in PointerLockControls
     controls.moveForward(velocity.z);
 
-    featherParticleSystem.render();
-    if(furInstancedMesh) furInstancedMesh.material.uniforms.time.value += 0.01;
+    featherParticleSystem.render(delta * 80); // Update feather particles
+    if(furInstancedMesh) furInstancedMesh.material.uniforms.time.value += 0.01; // Update fur shader time uniform for moving noise over fur
     composer.render();
 }
 

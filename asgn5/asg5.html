@@ -21,8 +21,50 @@ my submission's special features are notes in the <p> tags below the canvas. I h
     </script>
   </head>
 
-  <body style="background-color: black;">
+  <style>
+    body {
+      background-color: black;
+      color: white;
+    }
+    a {
+      color: pink;
+    }
+  </style>
+
+  <body">
+    <div id="threejs-container"></div>
+    >> NOTES FOR GRADER:
+    <br>
+    <li>This project might take a little while to load, so please be patient!</li>
+    <br>
+    <br>
+    >> INSTRUCTIONS:
+    <li>Click to lock pointer, then:</li>
+    <li>Use WASD to move around the scene, Q/E to move up and down, R to reset camera position.</li>
+    <li>Use mouse to look around.</li>
+    <li>Press ESC to unlock pointer.</li>
+    <br>
+    <br>
+    >> FEATURES:
+    <li>Chain, fox, and feather particles are all custom textured 3D models, edited in Blender.</li>
+    <li>Background is a custom HDRI image I put together and rendered in Blender, and applied as a skybox.</li>
+    <li>SHELL TEXTURING! for the fur of the fox. Custom fur shader material with instanced mesh.</li>
+    <li>Particle system for the feathers.</li>
+    <li>Bloom post processing effect.</li>
+    <br>
+    >> LIGHTS
+    <li>One directional light pointing up from the bottom left.</li>
+    <li>One spot light for the red lighting on the shapes.</li>
+    <li>Ambient light for overall quality.</li>
+    <li>Modified materials in Blender to be emissive, which light other objects in the scene.</li>
+    <br>
+    <br>
+    >> CREDITS:
+    <li>"Fox" <a href="https://skfb.ly/6TnPL">https://skfb.ly/6TnPL</a> by Alexei Ostapenko is licensed under Creative Commons Attribution (<a href="http://creativecommons.org/licenses/by/4.0/">http://creativecommons.org/licenses/by/4.0/</a>).</li>
+    <li>"Fire in Chain-valley:Chain Link" <a href="https://skfb.ly/ortqz">https://skfb.ly/ortqz</a> by vegardkr is licensed under Creative Commons Attribution (<a href="http://creativecommons.org/licenses/by/4.0/">http://creativecommons.org/licenses/by/4.0/</a>).</li>
+    <li>"Spiky Chain" <a href="https://skfb.ly/6T8OR">https://skfb.ly/6T8OR</a> by Jorada is licensed under Creative Commons Attribution (<a href="http://creativecommons.org/licenses/by/4.0/">http://creativecommons.org/licenses/by/4.0/</a>).</li>
     <script type="module" src="asg5.js"></script>
     <script src="featherparticles.js"></script>
   </body>
+
 </html>
