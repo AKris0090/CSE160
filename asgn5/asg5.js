@@ -18,7 +18,6 @@ renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
 const loader = new GLTFLoader();
-// const controls = new OrbitControls(camera, renderer.domElement);
 const controls = new PointerLockControls(camera, renderer.domElement);
 scene.add(controls.getObject());
 document.body.addEventListener('click', () => {
@@ -28,13 +27,23 @@ document.body.addEventListener('click', () => {
 camera.position.set( -18.335, 8.110, -8.524 );
 camera.setRotationFromEuler( new THREE.Euler( degToRad(-162.79), degToRad(-33.54), degToRad(-170.29), 'XYZ' ) );
 
-const light1 = new THREE.AmbientLight(0xffffff, 0.15);
+const light1 = new THREE.AmbientLight(0xffa500, 0.15);
 light1.position.set(0, 1, 1);
 scene.add(light1);
 
 const light2 = new THREE.DirectionalLight(0xffffff, 0.75);
 light2.position.set(0, -1, -1);
 scene.add(light2);
+
+const light3 = new THREE.PointLight(0xffa500, 5.0);
+light3.position.set(-0.406, 8.885, 20.859);
+scene.add(light3);
+
+const light4 = new THREE.SpotLight(0xffa500, 105.0);
+light4.position.set(5.00, 10.00, 7.5);
+light4.angle = 0.314;
+light4.penumbra = 0.0;
+scene.add(light4);
 
 const featherParticleSystem = new FeatherParticleSystem(THREE, scene, loader);
 
@@ -56,23 +65,39 @@ loader.load(
 );
 
 loader.load(
+    "models/eyeLiner.glb",
+    (gltf) => {
+        gltf.scene.position.set(-3.478, 8.85, 16.739);
+        gltf.scene.rotation.set(degToRad(-15.35), degToRad(0.83), degToRad(-5.7));
+        gltf.scene.scale.set(0.658, 0.428, 0.828);
+        scene.add( gltf.scene );
+    }
+)
+
+let cube;
+loader.load(
     "models/cube.glb",
     (gltf) => {
+        cube = gltf.scene;
         gltf.scene.position.set(-2, 0, 0);
         scene.add( gltf.scene );
     }
 );
 
+let cone;
 loader.load(
     "models/cone.glb",
     (gltf) => {
+        cone = gltf.scene;
         scene.add( gltf.scene );
     }
 );
 
+let torus;
 loader.load(
     "models/torus.glb",
     (gltf) => {
+        torus = gltf.scene;
         gltf.scene.position.set(2, 0, 0);
         scene.add( gltf.scene );
     }
@@ -293,7 +318,7 @@ let prevTime = performance.now();
 
 const move = { forward: false, backward: false, left: false, right: false, up: false, down: false };
 const velocity = new THREE.Vector3();
-const speed = 10; // units per second
+const speed = 10;
 
 document.addEventListener('keydown', (event) => {
     switch (event.code) {
@@ -321,6 +346,11 @@ function animate() {
     const currentTime = performance.now();
     const delta = (currentTime - prevTime) / 1000;
     prevTime = currentTime;
+
+    // Rotate primitives
+    if (cube) cube.rotation.z += delta;
+    if (cone) cone.rotation.y += delta;
+    if (torus) torus.rotation.x += delta;
     
     // Movement logic
     velocity.set(0, 0, 0);
@@ -332,7 +362,7 @@ function animate() {
     if (move.down) velocity.y += 1;
     velocity.normalize().multiplyScalar(speed * delta);
 
-    // Move the camera using controls
+    // Move the camera using keyboard input
     controls.moveRight(velocity.x);
     controls.getObject().position.y += velocity.y;
     controls.moveForward(velocity.z);

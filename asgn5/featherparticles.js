@@ -3,8 +3,8 @@ class FeatherParticleSystem {
         this.THREE = THREE;
         this.scene = scene;
         this.count = 150;
-        this.spawnPoint = [0, 100, 30];
-        this.spawnArea = 150;
+        this.spawnPoint = [0, 0, 40];
+        this.spawnArea = 100;
 
         this.featherParticlePositions = [];
         this.featherParticleMatrices = [];
@@ -15,7 +15,7 @@ class FeatherParticleSystem {
 
         loader.load(
             "models/featherparticle.glb",
-            (gltf) => { // <-- use arrow function here!
+            (gltf) => {
                 let mesh;
                 gltf.scene.traverse((child) => {
                     if (child.isMesh) {
@@ -47,7 +47,8 @@ class FeatherParticleSystem {
     }
 
     render() {
-        if (this.instancedFeatherMesh) {
+        if (!loadFlag && this.instancedFeatherMesh) {
+            loadFlag = true;
             for(let i = 0; i < this.count; i++) {
                 this.featherParticlePositions[i].y -= this.featherSpeeds[i];
                 this.featherParticleAngles[i] += 0.01;
@@ -68,7 +69,8 @@ class FeatherParticleSystem {
                 this.instancedFeatherMesh.setMatrixAt(i, this.featherParticleMatrices[i]);
             }
             this.instancedFeatherMesh.instanceMatrix.needsUpdate = true;
-
         }
     }
 }
+
+let loadFlag = false;
